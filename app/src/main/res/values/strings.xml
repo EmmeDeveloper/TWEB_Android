@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Project30</string>
+
+    <!-- Components -->
+    <string name="snack_ok">Ok</string>
+    <string name="dlg_err_ok">Ok</string>
+    <string name="dlg_err_title">Oh no!</string>
+
+    <string name="not_implemented_title">Non implementato</string>
+    <string name="not_implemented_body">Funzionalità non ancora presente, aggiunta per poter fare dei test</string>
+
+    <!--    Main screen  -->
+    <string name="connection_error_title">Errore di connessione</string>
+    <string name="connection_error_message">Impossibile ottenere i dati.\nControlla la tua connessione ad internet e riprova.</string>
+    <string name="retry_label">Riprova</string>
+
+
+    <!-- Login-->
+    <string name="login">Accedi col tuo account</string>
+    <string name="login_button">Accedi</string>
+    <string name="show_password">Mostra password</string>
+    <string name="hide_password">Nascondi password</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="remember_me">Ricordami</string>
+    <string name="forgot_password">Password dimenticata?</string>
+    <string name="dont_have_account">Non hai un account?</string>
+    <string name="sign_up">Registrati</string>
+    <string name="or">Oppure</string>
+
+
+
+</resources>
