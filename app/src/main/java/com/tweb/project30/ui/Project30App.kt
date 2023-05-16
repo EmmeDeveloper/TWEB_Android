@@ -16,20 +16,28 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.tweb.project30.R
 import com.tweb.project30.data.user.UserRepository
-import com.tweb.project30.ui.login.LoginScrenn
+import com.tweb.project30.ui.components.ErrorDialog
 import com.tweb.project30.ui.home.HomeScreen
+import com.tweb.project30.ui.home.HomeViewModel
+import com.tweb.project30.ui.home.HomeViewModelFactory
+import com.tweb.project30.ui.login.LoginScrenn
 import com.tweb.project30.ui.login.LoginViewModel
 import com.tweb.project30.ui.login.LoginViewModelFactory
+import com.tweb.project30.ui.profile.ProfileScreen
+import com.tweb.project30.ui.repetitions.FilterScreen
+import com.tweb.project30.ui.repetitions.RepetitionsScreen
+import com.tweb.project30.ui.repetitions.RepetitionsViewModel
+import com.tweb.project30.ui.repetitions.RepetitionsViewModelFactory
 
 @Composable
 fun Project30App(
     appState: Project30AppState = rememberProject30AppState()
 ) {
-    if (appState.isOnline) {
+//    if (appState.isOnline) {
         BottomNavigationBar(appState)
-    } else {
-        OfflineDialog { appState.refreshOnline() }
-    }
+//    } else {
+//        OfflineDialog { appState.refreshOnline() }
+//    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +45,8 @@ fun Project30App(
 fun BottomNavigationBar(appState: Project30AppState) {
     val navController = appState.navController
     val loginVM: LoginViewModel = viewModel(factory = LoginViewModelFactory())
+    val homeVM: HomeViewModel = viewModel(factory = HomeViewModelFactory())
+    val repetitionsVM: RepetitionsViewModel = viewModel(factory = RepetitionsViewModelFactory())
 
     Scaffold(
         bottomBar = {
@@ -59,15 +69,33 @@ fun BottomNavigationBar(appState: Project30AppState) {
                 }
 
                 composable(Screen.Home.route) {
-                    HomeScreen()
+                    HomeScreen(
+                        viewModel = homeVM,
+                        onUserActionClicked = { navController.navigate(
+                            if (UserRepository.isLogged?.value == true) Screen.Profile.route else Screen.Login.route
+                        ) },
+                        onRepetitionClicked = { navController.navigate(Screen.Repetitions.route) }
+                    )
                 }
 
                 composable(Screen.Calendar.route) {
-                    HomeScreen()
+                    HomeScreen(
+                        viewModel = homeVM,
+                        onUserActionClicked = { navController.navigate(Screen.Profile.route) },
+                        onRepetitionClicked = { navController.navigate(Screen.Repetitions.route) }
+                    )
+                }
+
+                composable(Screen.NestedScreen.Filter.route) {
+                    FilterScreen(repetitionsVM, onBackPressed = { navController.popBackStack() })
+                }
+
+                composable(Screen.Repetitions.route) {
+                    RepetitionsScreen(repetitionsVM, onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) })
                 }
 
                 composable(Screen.Profile.route) {
-                    HomeScreen()
+                   ProfileScreen()
                 }
             }
         }
@@ -82,20 +110,16 @@ fun BottomBar(navController: NavHostController) {
 
     val isLogged by UserRepository.isLogged.observeAsState(false)
 
-    var screens: List<Screen>
+    var screens: List<Screen> = listOf(
+        Screen.Home,
+        Screen.Calendar,
+        Screen.Repetitions
+    )
 
     if (isLogged) {
-        screens = listOf(
-            Screen.Home,
-            Screen.Calendar,
-            Screen.Profile
-        )
+        screens = screens.plus(Screen.Profile)
     } else
-        screens = listOf(
-            Screen.Home,
-            Screen.Calendar,
-            Screen.Login
-        )
+        screens = screens.plus(Screen.Login)
 
     BottomAppBar() {
         screens.forEach { screen ->
@@ -151,15 +175,16 @@ fun RowScope.AddItem(
             )
         },
         selected = currentDestination?.hierarchy?.any {
-            it.route == screen.route
+            it.route?.contains(screen.route) ?: false
         } == true,
         onClick = {
             navController.navigate(screen.route) {
                 popUpTo(navController.graph.findStartDestination().id)
                 launchSingleTop = true
+                restoreState = true
             }
         },
-        alwaysShowLabel = false
+//        alwaysShowLabel = false
     )
 }
 

@@ -18,8 +18,8 @@ enum class LoginRequestState {
 }
 
 data class LoginUIState(
-    var account: String = "",
-    var password: String = "",
+    var account: String = "giovanni", // TODO: remove default account
+    var password: String = "pass", // TODO: remove default password
     var loading: Boolean = false,
     var requestState: LoginRequestState = LoginRequestState.NONE,
 

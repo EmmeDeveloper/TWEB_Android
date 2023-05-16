@@ -38,8 +38,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tweb.project30.R
-import com.tweb.project30.ui.ErrorDialog
-import com.tweb.project30.ui.LoadingButton
+import com.tweb.project30.ui.components.ErrorDialog
+import com.tweb.project30.ui.components.LoadingButton
 import com.tweb.project30.util.supportWideScreen
 
 

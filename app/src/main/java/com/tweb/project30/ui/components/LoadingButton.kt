@@ -1,4 +1,4 @@
-package com.tweb.project30.ui
+package com.tweb.project30.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background

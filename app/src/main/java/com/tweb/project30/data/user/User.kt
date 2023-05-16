@@ -6,9 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class User(
     @JsonProperty("id") val id: String,
-    @JsonProperty("email") val email: String
+    @JsonProperty("email") val email: String,
+    @JsonProperty("role") val role: String,
+    @JsonProperty("account") val account: String
 )  {
     companion object {
-        val Default = User("", "");
+        val Default = User("", "", "", "");
     }
 }

@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.tweb.project30"
-        minSdk 24
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -65,9 +65,12 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
 
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
-    implementation "com.squareup.okhttp3:okhttp:4.7.2"
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+    implementation "com.squareup.okhttp3:okhttp-urlconnection:4.9.0"
     implementation "com.squareup.okhttp3:logging-interceptor:4.7.2"
     implementation "com.squareup.retrofit2:converter-jackson:2.1.0"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.+"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.5"
     implementation 'androidx.core:core-ktx:+'
 
     testImplementation 'junit:junit:4.13.2'

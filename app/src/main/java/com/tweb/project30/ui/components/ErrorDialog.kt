@@ -1,4 +1,4 @@
-package com.tweb.project30.ui
+package com.tweb.project30.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog

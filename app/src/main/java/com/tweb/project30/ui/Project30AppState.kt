@@ -5,10 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -24,9 +21,17 @@ sealed class Screen(
 ) {
     object Home : Screen(route = "home", label = "Home", icon = Icons.Filled.Home)
     object Calendar : Screen(route = "calendar", label = "Search", icon = Icons.Filled.CalendarMonth)
+    object Repetitions : Screen(route = "repetitions", label = "Repetitions", icon = Icons.Filled.List)
     object Profile : Screen(route = "profile", label = "Profile", icon = Icons.Filled.Person)
     object Login: Screen(route = "login", label = "Login", icon = Icons.Filled.Eco)
+
+    sealed class NestedScreen(
+        val route: String
+    ) {
+        object Filter : NestedScreen(route = "repetitions/filter")
+    }
 }
+
 
 @Composable
 fun rememberProject30AppState(
