@@ -24,6 +24,9 @@ import com.tweb.project30.data.repetition.RepetitionStatus
 import com.tweb.project30.data.user.User
 import com.tweb.project30.ui.components.AvailableRepetitionComponent
 import com.tweb.project30.ui.components.RepetitionComponent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -101,12 +104,12 @@ private fun RepetitionsList(
 ) {
 
     val currentDay = remember {
-        mutableStateOf(CurrentDayEditable(LocalDate.now(), false))
+        mutableStateOf(LocalDate.now())
     }
 
     val daysOfWeek = remember {
         derivedStateOf {
-            getWeekDates(currentDay.value.date)
+            getWeekDates(currentDay.value)
         }
     }
 
@@ -155,12 +158,11 @@ private fun RepetitionsList(
             daysOfWeek = daysOfWeek.value,
             currentDay = currentDay.value,
             onDaySelected = {
-                currentDay.value =
-                    CurrentDayEditable(date = it, isLastValueEmittedByUserClick = true)
+                currentDay.value = it
             },
             onModeSelected = {
                 calendarMode.value = it
-                             },
+            },
         )
 
         if (calendarMode.value == CalendarMode.Day)
@@ -171,18 +173,19 @@ private fun RepetitionsList(
             ) {
                 RepetitionsListView(
                     startDate = LocalDate.now(), // Start from today
-                    endDate = daysOfWeek.value.last()
-                        .plusDays(7), // Load placeholder repetitions for 7 days after the last day of the week
+                    endDate = maxOf(
+                        daysOfWeek.value.last().plusDays(7),
+                        currentDay.value
+                    )
+                    , // Load placeholder repetitions for 7 days after the last day of the week
                     courses = courses,
                     professors = professors,
                     groupedRepetitions = grouped,
                     user = repetitions.first().user!!,
                     currentDayChanged = {
-                        currentDay.value =
-                            CurrentDayEditable(date = it, isLastValueEmittedByUserClick = false)
+                        currentDay.value = it
                     },
                     currentDay = currentDay.value,
-                    shouldEmitScrollEvent = calendarMode.value == CalendarMode.Day,
                     listState = listState
                 )
             }
@@ -194,11 +197,6 @@ private fun RepetitionsList(
     }
 }
 
-data class CurrentDayEditable(
-    val date: LocalDate,
-    val isLastValueEmittedByUserClick: Boolean
-)
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RepetitionsListView(
@@ -209,21 +207,20 @@ fun RepetitionsListView(
     groupedRepetitions: Map<LocalDate, List<Repetition>>,
     user: User,
     currentDayChanged: (LocalDate) -> Unit = {},
-    currentDay: CurrentDayEditable,
-    shouldEmitScrollEvent: Boolean,
-    listState : LazyListState = rememberLazyListState(),
+    currentDay: LocalDate,
+    listState: LazyListState,
 ) {
+
+    val isScrollSentProgrammatically = remember {
+        mutableStateOf(false)
+    }
+
     val firstVisibleDay: State<LocalDate?> = remember {
         derivedStateOf {
             listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.key is LocalDate }
-                ?.let { it.key as LocalDate }
+                ?.let { it.key as LocalDate } //?: currentDay
         }
-    }
-
-    LaunchedEffect(firstVisibleDay.value) {
-        if (!shouldEmitScrollEvent) return@LaunchedEffect
-        currentDayChanged(firstVisibleDay.value ?: startDate)
     }
 
     val isNearToEnd: State<Boolean> = remember {
@@ -253,11 +250,6 @@ fun RepetitionsListView(
     LaunchedEffect(maxCalculatedDate.value) {
         var date = days.keys.lastOrNull() ?: startDate
 
-        val wasMaxDateRecalculatedByCurrentDayChange =
-            date.isBefore(currentDay.date) &&
-                    currentDay.isLastValueEmittedByUserClick &&
-                    days.isNotEmpty()
-
         while (date.isBefore(maxCalculatedDate.value.plusDays(1))) {
             val times = mutableListOf<Int>()
             times.add(14)
@@ -267,15 +259,24 @@ fun RepetitionsListView(
             days[date] = times
             date = date.plusDays(1)
         }
+    }
 
-        if (wasMaxDateRecalculatedByCurrentDayChange) {
-            listState.animateScrollToItem(days.keys.indexOf(currentDay.date) * 4)
+    LaunchedEffect(firstVisibleDay.value) {
+        if (firstVisibleDay.value != null && !isScrollSentProgrammatically.value) {
+            currentDayChanged(firstVisibleDay.value!!)
         }
     }
 
-    LaunchedEffect(currentDay.date, currentDay.isLastValueEmittedByUserClick) {
-        if (currentDay.isLastValueEmittedByUserClick && days.keys.contains(currentDay.date)) {
-            listState.animateScrollToItem(days.keys.indexOf(currentDay.date) * 5)
+    LaunchedEffect(currentDay) {
+        if (currentDay != firstVisibleDay.value) {
+            isScrollSentProgrammatically.value = true
+            val scrollJob = launch {
+                withContext(Dispatchers.Main) {
+                    listState.scrollToItem(days.keys.indexOf(currentDay) * 5)
+                }
+            }
+            scrollJob.join()
+            isScrollSentProgrammatically.value = false
         }
     }
 

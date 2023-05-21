@@ -37,7 +37,7 @@ enum class CalendarMode {
 @Composable
 fun CalendarToolbar(
     daysOfWeek: List<LocalDate>,
-    currentDay: CurrentDayEditable,
+    currentDay: LocalDate,
     onDaySelected: (LocalDate) -> Unit,
     onModeSelected: (CalendarMode) -> Unit,
 ) {
@@ -80,17 +80,16 @@ fun CalendarToolbar(
             if (selectedItem == "Giorno")
                 CalendarWeek(
                     daysOfWeek = daysOfWeek,
-                    currentDay = currentDay.date,
+                    currentDay = currentDay,
                     onDaySelected = onDaySelected
                 )
             else
                 CalendarMonth(
-                    currentDayEditable = currentDay,
+                    currentDay = currentDay,
                     onDaySelected = onDaySelected,
+//                    onDaySelected = {  },
                     listState = listState
                 )
-
-
         }
     }
 }
@@ -167,12 +166,11 @@ fun CalendarWeek(
 
 @Composable
 fun CalendarMonth(
-    currentDayEditable: CurrentDayEditable,
+    currentDay: LocalDate,
     onDaySelected: (LocalDate) -> Unit,
     pastDaySelectable: Boolean = false,
     listState: LazyListState,
 ) {
-    val currentDay = currentDayEditable.date
     val days = remember { getDaysOfYear(currentDay.year) }
     val dayOfWeek = remember { listOf("L", "M", "M", "G", "V", "S", "D") }
 
@@ -182,7 +180,7 @@ fun CalendarMonth(
             .groupBy { it.month }
     }
 
-
+    val internalCurrentDay = remember { mutableStateOf(currentDay) }
 
     // Days of the week
     Column {
@@ -291,7 +289,7 @@ fun CalendarMonth(
     }
 
     // Jump to current day
-    LaunchedEffect(currentDayEditable.date, currentDayEditable.isLastValueEmittedByUserClick) {
+    LaunchedEffect(internalCurrentDay.value) {
         val cellBeforeDate = (1 until currentDay.month.value)
             .map {
                 val firstDayOfMonth = LocalDate.of(currentDay.year, it, 1)
