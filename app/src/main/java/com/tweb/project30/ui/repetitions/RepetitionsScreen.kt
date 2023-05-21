@@ -2,35 +2,32 @@ package com.tweb.project30.ui.repetitions
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tweb.project30.data.course.Course
 import com.tweb.project30.data.professor.Professor
 import com.tweb.project30.data.repetition.Repetition
+import com.tweb.project30.data.repetition.RepetitionStatus
 import com.tweb.project30.data.user.User
 import com.tweb.project30.ui.components.AvailableRepetitionComponent
 import com.tweb.project30.ui.components.RepetitionComponent
-import com.tweb.project30.ui.theme.MontserratFontFamily
-import kotlinx.coroutines.CoroutineScope
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -103,38 +100,27 @@ private fun RepetitionsList(
     professors: Map<String, List<Professor>>,
 ) {
 
-    val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-
-    val currentDay: State<LocalDate?> = remember {
-        derivedStateOf {
-            listState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.key is LocalDate }
-                ?.let { it.key as LocalDate }
-        }
-    }
-
-    val isNearToEnd: State<Boolean> = remember {
-        derivedStateOf {
-            val itemCount = listState.layoutInfo.totalItemsCount
-            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-            val threshold = 3
-
-            itemCount - lastVisibleIndex <= threshold
-        }
+    val currentDay = remember {
+        mutableStateOf(CurrentDayEditable(LocalDate.now(), false))
     }
 
     val daysOfWeek = remember {
         derivedStateOf {
-            getWeekDates(currentDay.value ?: LocalDate.now())
+            getWeekDates(currentDay.value.date)
         }
     }
 
+    val calendarMode = remember {
+        mutableStateOf(CalendarMode.Day)
+    }
 
     val repetitions = mutableListOf<Repetition>()
-    val dates = generateUniqueDates(daysOfWeek.value.first(), daysOfWeek.value.last()) // Generate 30 unique dates
+    val dates = generateUniqueDates(
+        LocalDate.now().minusDays(1),
+        LocalDate.now().plusDays(7)
+    ) // Generate 30 unique dates
     var index = 0
-    repeat(50) {
+    repeat(80) {
         val date = dates[index % dates.size]
 
         val user = User("${it % 2}", "User_${it % 5}", "User", "User_${it % 5}")
@@ -150,7 +136,7 @@ private fun RepetitionsList(
             user = user,
             date = date,
             time = (it % 4) + 14,
-            status = "Scheduled",
+            status = RepetitionStatus.values()[it % 3].toString(),
             note = "Note_$it",
             course = Course("Course_${it % 10}", "Course_${it % 10}")
         )
@@ -161,135 +147,57 @@ private fun RepetitionsList(
     val grouped = repetitions.groupBy { it.date }
     repetitions.sortBy { it.date }
 
+    val listState = rememberLazyListState() // Remember scroll state to scroll to the current day
 
     Column {
 
-        CalendarWeek(
+        CalendarToolbar(
             daysOfWeek = daysOfWeek.value,
-            currentDay = currentDay,
-            onDaySelected = {}
+            currentDay = currentDay.value,
+            onDaySelected = {
+                currentDay.value =
+                    CurrentDayEditable(date = it, isLastValueEmittedByUserClick = true)
+            },
+            onModeSelected = {
+                calendarMode.value = it
+                             },
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            RepetitionsListView(
-                startDate = daysOfWeek.value.first(),
-                endDate = daysOfWeek.value.last(),
-                courses = courses,
-                professors = professors,
-                groupedRepetitions = grouped,
-                listState = listState,
-                coroutineScope = coroutineScope,
-                isNearToEnd = isNearToEnd,
-                user = repetitions.first().user!!,
-            )
-        }
-
-
-
-        if (isNearToEnd.value) {
-            Text(text = "Loading more...", modifier = Modifier.padding(16.dp))
-        }
-    }
-}
-
-@Composable
-fun CalendarWeek(
-    daysOfWeek: List<LocalDate>,
-    currentDay: State<LocalDate?>,
-    onDaySelected: (LocalDate) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            daysOfWeek.forEach {
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-
-                    Text(
-                        text = it.dayOfWeek.getDisplayName(
-                            TextStyle.NARROW,
-                            Locale("it", "IT")
-                        ).uppercase(),
-                        modifier = Modifier
-                            .padding(4.dp),
-                        fontFamily = MontserratFontFamily,
-                    )
-
-                    val isToday = it == LocalDate.now()
-                    val isSelected = it == currentDay.value
-
-                    val backgroundColor = when {
-                        isToday && !isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        isSelected -> MaterialTheme.colorScheme.primary
-                        else -> Color.Transparent
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .background(backgroundColor, CircleShape)
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = it.dayOfMonth.toString(),
-                            modifier = Modifier
-                                .wrapContentSize(Alignment.Center),
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Color.White else Color.Black
-                        )
-                    }
-
-//                        Text(
-//                            text = it.dayOfMonth.toString(),
-//                            modifier = Modifier
-//                                .background(
-//                                    backgroundColor,
-//                                    CircleShape
-//                                )
-//                                .fillMaxWidth()
-//                                .aspectRatio(1f),
-//                            textAlign = TextAlign.Center,
-//                            fontWeight = FontWeight.Bold,
-//                            fontFamily = MontserratFontFamily,
-//                            color = if (isSelected) Color.White else Color.Black
-//                        )
-                }
-
+        if (calendarMode.value == CalendarMode.Day)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                RepetitionsListView(
+                    startDate = LocalDate.now(), // Start from today
+                    endDate = daysOfWeek.value.last()
+                        .plusDays(7), // Load placeholder repetitions for 7 days after the last day of the week
+                    courses = courses,
+                    professors = professors,
+                    groupedRepetitions = grouped,
+                    user = repetitions.first().user!!,
+                    currentDayChanged = {
+                        currentDay.value =
+                            CurrentDayEditable(date = it, isLastValueEmittedByUserClick = false)
+                    },
+                    currentDay = currentDay.value,
+                    shouldEmitScrollEvent = calendarMode.value == CalendarMode.Day,
+                    listState = listState
+                )
             }
 
-            // Filter button
-            Icon(
-                Icons.Filled.CalendarMonth,
-                contentDescription = "Filter",
-                modifier = Modifier
-                    .size(44.dp)
-                    .padding(8.dp)
-                    .clickable {
-//                            onFilterButtonClicked()
-                    }
-            )
-        }
 
+//        if (isNearToEnd.value) {
+//            Text(text = "Loading more...", modifier = Modifier.padding(16.dp))
+//        }
     }
 }
+
+data class CurrentDayEditable(
+    val date: LocalDate,
+    val isLastValueEmittedByUserClick: Boolean
+)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -299,26 +207,79 @@ fun RepetitionsListView(
     courses: List<Course>,
     professors: Map<String, List<Professor>>,
     groupedRepetitions: Map<LocalDate, List<Repetition>>,
-    listState: LazyListState,
-    coroutineScope: CoroutineScope,
-    isNearToEnd: State<Boolean>,
-    user: User
+    user: User,
+    currentDayChanged: (LocalDate) -> Unit = {},
+    currentDay: CurrentDayEditable,
+    shouldEmitScrollEvent: Boolean,
+    listState : LazyListState = rememberLazyListState(),
 ) {
-
-    val days = remember {
-        mutableStateMapOf<LocalDate, List<Int>>().apply {
-            var date = startDate
-            while (date.isBefore(endDate)) {
-                val times = mutableListOf<Int>()
-                times.add(14)
-                times.add(15)
-                times.add(16)
-                times.add(17)
-                put(date, times)
-                date = date.plusDays(1)
-            }
+    val firstVisibleDay: State<LocalDate?> = remember {
+        derivedStateOf {
+            listState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.key is LocalDate }
+                ?.let { it.key as LocalDate }
         }
     }
+
+    LaunchedEffect(firstVisibleDay.value) {
+        if (!shouldEmitScrollEvent) return@LaunchedEffect
+        currentDayChanged(firstVisibleDay.value ?: startDate)
+    }
+
+    val isNearToEnd: State<Boolean> = remember {
+        derivedStateOf {
+            val itemCount = listState.layoutInfo.totalItemsCount
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            val threshold = 3
+
+            itemCount - lastVisibleIndex <= threshold
+        }
+    }
+
+    val days = remember {
+        sortedMapOf<LocalDate, List<Int>>()
+    }
+
+    val maxCalculatedDate = remember {
+        mutableStateOf(maxOf(LocalDate.now(), endDate))
+    }
+
+    LaunchedEffect(endDate) {
+        if (endDate.isAfter(maxCalculatedDate.value)) {
+            maxCalculatedDate.value = endDate
+        }
+    }
+
+    LaunchedEffect(maxCalculatedDate.value) {
+        var date = days.keys.lastOrNull() ?: startDate
+
+        val wasMaxDateRecalculatedByCurrentDayChange =
+            date.isBefore(currentDay.date) &&
+                    currentDay.isLastValueEmittedByUserClick &&
+                    days.isNotEmpty()
+
+        while (date.isBefore(maxCalculatedDate.value.plusDays(1))) {
+            val times = mutableListOf<Int>()
+            times.add(14)
+            times.add(15)
+            times.add(16)
+            times.add(17)
+            days[date] = times
+            date = date.plusDays(1)
+        }
+
+        if (wasMaxDateRecalculatedByCurrentDayChange) {
+            listState.animateScrollToItem(days.keys.indexOf(currentDay.date) * 4)
+        }
+    }
+
+    LaunchedEffect(currentDay.date, currentDay.isLastValueEmittedByUserClick) {
+        if (currentDay.isLastValueEmittedByUserClick && days.keys.contains(currentDay.date)) {
+            listState.animateScrollToItem(days.keys.indexOf(currentDay.date) * 5)
+        }
+    }
+
+    val dateHeaderFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
 
     LazyColumn(
         state = listState
@@ -327,10 +288,25 @@ fun RepetitionsListView(
         days.forEach { (date, times) ->
             stickyHeader(key = date) {
                 Text(
-                    text = date.toString(),
+                    text =
+                    AnnotatedString(
+                        date.format(dateHeaderFormatter),
+                        spanStyle = SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    ) +
+                            AnnotatedString(" ") +
+                            AnnotatedString(
+                                date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ITALIAN),
+                                spanStyle = SpanStyle(
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                            ),
                     modifier = Modifier
                         .background(Color.White)
-                        .padding(8.dp)
+                        .padding(start = 16.dp, top = 8.dp, end = 16.dp)
                         .fillMaxWidth()
                         .height(32.dp)
                 )
@@ -339,39 +315,59 @@ fun RepetitionsListView(
 
             items(times) { time ->
 
-                // Get repetition filtered by date and time
-                val repetitionOfCurrentTime = groupedRepetitions[date]?.filter { it.time == time } ?: emptyList()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
 
-                // Get repetition of current time and user
-                val myRepetition = repetitionOfCurrentTime?.firstOrNull { it.IDUser?.equals(user?.id) ?: false }
-
-                if (myRepetition != null) {
-
-                    RepetitionComponent(
-                        repetition = myRepetition,
-                        onRepetitionClicked = {}
+                    Text(
+                        text = "$time:00\n${time.plus(1)}:00",
+                        modifier = Modifier.padding(
+                            start = 16.dp,
+                            top = 8.dp,
+                            bottom = 8.dp,
+                            end = 8.dp
+                        ),
                     )
 
-                } else {
+                    // Get repetition filtered by date and time
+                    val repetitionOfCurrentTime =
+                        groupedRepetitions[date]?.filter { it.time == time } ?: emptyList()
 
-                    // Get available courses and professors
-                    val availableProfessor = professors.toMutableMap()
-                    repetitionOfCurrentTime.forEach { rep ->
-                        availableProfessor[rep.IDCourse]?.let { professorList ->
-                            val filteredProfessors = professorList.filter { it.ID != rep.IDProfessor }
-                            availableProfessor[rep.IDCourse!!] = filteredProfessors
+                    // Get repetition of current time and user
+                    val myRepetition =
+                        repetitionOfCurrentTime?.firstOrNull {
+                            it.IDUser?.equals(user?.id) ?: false
                         }
+
+                    if (myRepetition != null) {
+
+                        RepetitionComponent(
+                            repetition = myRepetition,
+                            onRepetitionClicked = {}
+                        )
+
+                    } else {
+
+                        // Get available courses and professors
+                        val availableProfessor = professors.toMutableMap()
+                        repetitionOfCurrentTime.forEach { rep ->
+                            availableProfessor[rep.IDCourse]?.let { professorList ->
+                                val filteredProfessors =
+                                    professorList.filter { it.ID != rep.IDProfessor }
+                                availableProfessor[rep.IDCourse!!] = filteredProfessors
+                            }
+                        }
+
+                        AvailableRepetitionComponent(
+                            courses = courses,
+                            professors = professors,
+                            availableProfessors = availableProfessor,
+                            onRepetitionClicked = {},
+                            date = date.atTime(LocalTime.of(time, 0, 0)),
+                        )
+
                     }
-
-                    AvailableRepetitionComponent(
-                        courses = courses,
-                        professors = professors,
-                        availableProfessors = availableProfessor,
-                        onRepetitionClicked = {}
-                    )
-
                 }
-
             }
         }
     }
@@ -382,20 +378,6 @@ fun generateUniqueDates(startDate: LocalDate, endDate: LocalDate): List<LocalDat
     val daysBetween = ChronoUnit.DAYS.between(startDate, endDate)
     return (0..daysBetween).map { startDate.plusDays(it) }
 }
-
-//fun calendarDates(): Map<Int, List<LocalDate>> {
-//    val calendarDates = mutableListOf<LocalDate>()
-//    var currentDate = LocalDate.of(2023, 1, 1)
-//
-//    while (!currentDate.isAfter(LocalDate.of(2023, 12, 31))) {
-//        if (currentDate.dayOfWeek.value < 6) {
-//            calendarDates.add(currentDate)
-//        }
-//        currentDate = currentDate.plusDays(1)
-//    }
-//
-//    return calendarDates.groupBy { it.get(WeekFields.ISO.weekOfWeekBasedYear()) }
-//}
 
 fun getWeekDates(currentDay: LocalDate): List<LocalDate> {
     val startOfWeek = currentDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
