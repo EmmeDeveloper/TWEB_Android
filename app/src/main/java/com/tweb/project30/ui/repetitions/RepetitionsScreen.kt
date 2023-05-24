@@ -22,7 +22,8 @@ import com.tweb.project30.data.professor.Professor
 import com.tweb.project30.data.repetition.Repetition
 import com.tweb.project30.data.repetition.RepetitionStatus
 import com.tweb.project30.data.user.User
-import com.tweb.project30.ui.components.AvailableRepetitionComponent
+import com.tweb.project30.ui.components.AvailableRepetitionCardComponent
+import com.tweb.project30.ui.components.RepetitionCardComponent
 import com.tweb.project30.ui.components.RepetitionComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,6 +74,11 @@ private fun RepetitionsScreen(
     val professors = repetitionsState.value.professors
     val selectedProfessors = repetitionsState.value.selectedProfessors
 
+    var reserveState by remember {
+        mutableStateOf<ReserveUIState?>(null)
+    }
+
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,15 +98,38 @@ private fun RepetitionsScreen(
         RepetitionsList(
             courses = courses,
             professors = selectedProfessors,
+            onReserveClicked = { date, time, availableProfessors ->
+                reserveState = ReserveUIState(date, time, availableProfessors, professors)
+            },
+            onRepetitionClicked = {}
         )
     }
+
+    if (reserveState != null) {
+        RepetitionComponent(
+            reserveState!!,
+            onBackClicked = {
+                reserveState = null
+            },
+        )
+    }
+
 }
+
+    data class ReserveUIState(
+        val date: LocalDate,
+        val time: Int,
+        val availableProfessors: Map<String, List<Professor>>,
+        val professors: Map<String, List<Professor>>
+    )
 
 
 @Composable
 private fun RepetitionsList(
     courses: List<Course>,
     professors: Map<String, List<Professor>>,
+    onReserveClicked: (date: LocalDate, time: Int, availableProfessors: Map<String, List<Professor>>) -> Unit,
+    onRepetitionClicked: (Repetition) -> Unit,
 ) {
 
     val currentDay = remember {
@@ -176,8 +205,7 @@ private fun RepetitionsList(
                     endDate = maxOf(
                         daysOfWeek.value.last().plusDays(7),
                         currentDay.value
-                    )
-                    , // Load placeholder repetitions for 7 days after the last day of the week
+                    ), // Load placeholder repetitions for 7 days after the last day of the week
                     courses = courses,
                     professors = professors,
                     groupedRepetitions = grouped,
@@ -186,7 +214,9 @@ private fun RepetitionsList(
                         currentDay.value = it
                     },
                     currentDay = currentDay.value,
-                    listState = listState
+                    listState = listState,
+                    onReserveClicked = onReserveClicked,
+                    onRepetitionClicked = onRepetitionClicked,
                 )
             }
 
@@ -209,6 +239,12 @@ fun RepetitionsListView(
     currentDayChanged: (LocalDate) -> Unit = {},
     currentDay: LocalDate,
     listState: LazyListState,
+    onReserveClicked: (
+        date: LocalDate,
+        time: Int,
+        availableProfessors: Map<String, List<Professor>>,
+    ) -> Unit,
+    onRepetitionClicked: (Repetition) -> Unit = {},
 ) {
 
     val isScrollSentProgrammatically = remember {
@@ -342,7 +378,7 @@ fun RepetitionsListView(
 
                     if (myRepetition != null) {
 
-                        RepetitionComponent(
+                        RepetitionCardComponent(
                             repetition = myRepetition,
                             onRepetitionClicked = {}
                         )
@@ -359,11 +395,13 @@ fun RepetitionsListView(
                             }
                         }
 
-                        AvailableRepetitionComponent(
+                        AvailableRepetitionCardComponent(
                             courses = courses,
                             professors = professors,
                             availableProfessors = availableProfessor,
-                            onRepetitionClicked = {},
+                            onRepetitionClicked = {
+                                onReserveClicked(date, time, availableProfessor)
+                            },
                             date = date.atTime(LocalTime.of(time, 0, 0)),
                         )
 

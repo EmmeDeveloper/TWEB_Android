@@ -48,24 +48,27 @@ class RepetitionsViewModel(
             Course(title = "Algoritmi", ID = "Algoritmi"),
         )
 
+        val firstNameList = listOf("Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona")
+        val lastNameList = listOf("Smith", "Johnson", "Williams", "Brown", "Jones", "Davis")
+
         val professors: Map<String, List<Professor>> = mapOf(
             "TWeb" to listOf(
-                Professor(name = "Prof1", surname = "Prof1", ID = "1"),
-                Professor(name = "Prof2", surname = "Prof2", ID = "2"),
-                Professor(name = "Prof3", surname = "Prof3", ID = "3"),
-                Professor(name = "Prof4", surname = "Prof4", ID = "4"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "1"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "2"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "3"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "4"),
             ),
             "Analisi1" to listOf(
-                Professor(name = "Prof1", surname = "Prof1", ID = "1"),
-                Professor(name = "Prof2", surname = "Prof2", ID = "2"),
-                Professor(name = "Prof3", surname = "Prof3", ID = "3"),
-                Professor(name = "Prof4", surname = "Prof4", ID = "4"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "1"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "2"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "3"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "4"),
             ),
             "Algoritmi" to listOf(
-                Professor(name = "Prof1", surname = "Prof1", ID = "1"),
-                Professor(name = "Prof2", surname = "Prof2", ID = "2"),
-                Professor(name = "Prof3", surname = "Prof3", ID = "3"),
-                Professor(name = "Prof4", surname = "Prof4", ID = "4"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "1"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "2"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "3"),
+                Professor(name = firstNameList.random(), surname = lastNameList.random(), ID = "4"),
             ),
         )
 

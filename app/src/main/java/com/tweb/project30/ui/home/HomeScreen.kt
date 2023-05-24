@@ -24,7 +24,7 @@ import com.tweb.project30.data.course.Course
 import com.tweb.project30.data.professor.Professor
 import com.tweb.project30.data.repetition.Repetition
 import com.tweb.project30.data.repetition.RepetitionStatus
-import com.tweb.project30.ui.components.RepetitionComponentHome
+import com.tweb.project30.ui.components.RepetitionCardComponentHome
 import com.tweb.project30.ui.theme.MontserratFontFamily
 import java.time.LocalDate
 import java.util.*
@@ -190,7 +190,7 @@ private fun HomeLoggedScreen(
 
         // Previous
         if (homeState.previousRepetition != null || true) {
-            RepetitionComponentHome(
+            RepetitionCardComponentHome(
                 repetition = homeState.previousRepetition ?: prev,
                 onRepetitionClicked = { onRepetitionClicked(it) })
         } else {
@@ -209,7 +209,7 @@ private fun HomeLoggedScreen(
 
         // Next
         if (homeState.nextRepetition != null || true) {
-            RepetitionComponentHome(
+            RepetitionCardComponentHome(
                 repetition = homeState.previousRepetition ?: next,
                 onRepetitionClicked = { onRepetitionClicked(it) })
             // onRepetitionClicked

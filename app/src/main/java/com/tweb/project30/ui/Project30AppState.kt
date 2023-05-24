@@ -29,6 +29,7 @@ sealed class Screen(
         val route: String
     ) {
         object Filter : NestedScreen(route = "repetitions/filter")
+        object Reserve : NestedScreen(route = "repetitions/reserve")
     }
 }
 

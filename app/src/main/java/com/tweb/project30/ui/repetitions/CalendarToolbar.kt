@@ -231,8 +231,10 @@ fun CalendarMonth(
                 )
             }
 
+
             weeks.forEach() { week ->
                 item {
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -240,13 +242,15 @@ fun CalendarMonth(
                     ) {
                         repeat(7) { index ->
                             val day = week.getOrNull(index)
+
                             if (day != null) {
                                 val isSelected = day == currentDay
                                 val isToday = day == LocalDate.now()
+                                val daySelectable = pastDaySelectable || day >= LocalDate.now()
 
                                 val textColor =
                                     if (isToday) MaterialTheme.colorScheme.primary
-                                    else if (pastDaySelectable || day >= LocalDate.now()) Color.Black
+                                    else if (daySelectable) Color.Black
                                     else Color.Gray.copy(alpha = 0.5f)
 
                                 val backgroundColor = when {
@@ -261,7 +265,7 @@ fun CalendarMonth(
                                         .align(Alignment.CenterVertically)
                                         .padding(8.dp)
                                         .aspectRatio(1f)
-                                        .clickable { onDaySelected(day) },
+                                        .clickable(enabled = daySelectable) { onDaySelected(day) },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(

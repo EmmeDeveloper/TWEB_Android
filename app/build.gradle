@@ -72,6 +72,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.14.+"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.5"
     implementation 'androidx.core:core-ktx:+'
+    implementation 'androidx.compose.material:material:1.4.3'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
