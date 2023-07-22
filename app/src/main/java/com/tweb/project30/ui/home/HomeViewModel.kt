@@ -8,9 +8,11 @@ import com.tweb.project30.data.repetition.Repetition
 import com.tweb.project30.data.repetition.RepetitionRepository
 import com.tweb.project30.data.user.User
 import com.tweb.project30.data.user.UserRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.*
 
 data class HomeUIState(
@@ -54,13 +56,14 @@ class HomeViewModel(
 
         viewModelScope.launch {
             try {
+                delay(200)
                 val user = userRepository.currentUser
 
                 val start = Calendar.getInstance()
-                start.set(2023,1,1)
+                start.set(LocalDate.now().year,1,1)
 
                 val end = Calendar.getInstance()
-                end.set(2024,1,1)
+                end.set(LocalDate.now().year,12,31)
 
                 val repetitions = repetitionRepository.getRepetitions(
                     user.id,

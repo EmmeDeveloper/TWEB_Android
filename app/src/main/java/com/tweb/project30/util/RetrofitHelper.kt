@@ -1,6 +1,7 @@
 package com.tweb.project30.util
 
 import android.util.Log
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
@@ -13,7 +14,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 
 
 object RetrofitHelper {
-    var BASE_URL = "http://192.168.10.107:8080/Project30/"
+    var BASE_URL = "http://192.168.1.29:8080/Project30/"
 
     fun getInstance(): Retrofit {
 
@@ -40,6 +41,7 @@ object RetrofitHelper {
                         .build()
                 )
                 .registerModule(JavaTimeModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         )
 
         return Retrofit.Builder()

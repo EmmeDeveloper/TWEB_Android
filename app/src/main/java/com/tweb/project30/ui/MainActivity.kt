@@ -24,3 +24,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// TODOS
+// Ripetizioni passate cliccabili
+// Spostamento su login quando non loggato e si prova a prenotare
+// Rimuovere sabato e domenica
+
+

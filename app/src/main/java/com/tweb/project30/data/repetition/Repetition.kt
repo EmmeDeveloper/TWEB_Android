@@ -15,17 +15,19 @@ enum class RepetitionStatus(val value: String) {
 
 data class Repetition (
     @JsonProperty("id") val ID: String,
-    @JsonProperty("iduser") val IDUser: String? = null,
-    @JsonProperty("idcourse") val IDCourse: String?  = null,
-    @JsonProperty("idprofessor") val IDProfessor: String?  = null,
     @JsonProperty("professor") val professor: Professor?  = null,
     @JsonProperty("user") val user: User?  = null,
+    @JsonProperty("course") val course: Course? = null,
     @JsonProperty("date") val date: LocalDate,
     @JsonProperty("time") val time: Int,
-    @JsonProperty("status") val status: String,
+    @JsonProperty("status") val status: String?, // Could be an enum. Is null when the repetition is not assigned to current user
     @JsonProperty("note") val note: String? = null,
-    val course: Course? = null
-) {
+
+    ) {
+
+    val IDUser: String? get() = user?.id
+    val IDCourse: String? get() = course?.ID
+    val IDProfessor: String? get() = professor?.ID
 
     fun isBeforeNow(): Boolean {
         val currentDateTime = LocalDateTime.now()

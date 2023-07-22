@@ -1,5 +1,6 @@
 package com.tweb.project30.ui.repetitions
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,11 +21,10 @@ import androidx.compose.ui.unit.sp
 import com.tweb.project30.data.course.Course
 import com.tweb.project30.data.professor.Professor
 import com.tweb.project30.data.repetition.Repetition
-import com.tweb.project30.data.repetition.RepetitionStatus
-import com.tweb.project30.data.user.User
 import com.tweb.project30.ui.components.AvailableRepetitionCardComponent
 import com.tweb.project30.ui.components.RepetitionCardComponent
 import com.tweb.project30.ui.components.RepetitionComponent
+import com.tweb.project30.ui.components.ReservationComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,27 +37,29 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.*
 
-
-//data class RepetitionsUIState(
-//    var courses: List<Course> = emptyList(),
-//    var professors: Map<String, List<Professor>> = emptyMap(),
-//    var selectedCourses: List<Course> = emptyList(),
-//    var selectedProfessors: Map<String, List<Professor>> = emptyMap(),
-//    var loading: Boolean = false,
-//    var currentUserId: String = ""
-//)
-
 @Composable
 fun RepetitionsScreen(
     viewModel: RepetitionsViewModel,
     onFilterButtonClicked: () -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsState()
+
     RepetitionsScreen(
         uiState,
         onFilterButtonClicked,
         updateFilters = { selectedProfessors ->
             viewModel.updateFilters(selectedProfessors)
+        },
+        reserveRepetition = { course, prof, date, time ->
+            viewModel.addRepetition(
+                course, prof, date, time
+            )
+        },
+        deleteRepetition = { repetition ->
+            viewModel.deleteRepetition(repetition)
+        },
+        updateRepetition = { repetition, status, note ->
+            viewModel.updateRepetition(repetition, status, note)
         }
     )
 
@@ -68,6 +70,9 @@ private fun RepetitionsScreen(
     repetitionsState: State<RepetitionsUIState>,
     onFilterButtonClicked: () -> Unit,
     updateFilters: (selectedProfessors: Map<String, List<Professor>>) -> Unit,
+    reserveRepetition: (idcourse: String, idprofessor: String, date: LocalDate, time: Int) -> Unit,
+    deleteRepetition: (repetition: Repetition) -> Unit,
+    updateRepetition: (repetition: Repetition, status: String, note: String? ) -> Unit,
 ) {
 
     val courses = repetitionsState.value.courses
@@ -77,6 +82,11 @@ private fun RepetitionsScreen(
     var reserveState by remember {
         mutableStateOf<ReserveUIState?>(null)
     }
+
+    var selectedRepetitionState by remember {
+        mutableStateOf<SelectedRepetitionUIState?>(null)
+    }
+
 
 
     Column(
@@ -99,29 +109,95 @@ private fun RepetitionsScreen(
             courses = courses,
             professors = selectedProfessors,
             onReserveClicked = { date, time, availableProfessors ->
-                reserveState = ReserveUIState(date, time, availableProfessors, professors)
+                reserveState = ReserveUIState(
+                    date,
+                    time,
+                    availableProfessors,
+                    repetitionsState.value.loading,
+                    courses
+                )
             },
-            onRepetitionClicked = {}
+            onRepetitionClicked = {
+                selectedRepetitionState =
+                    SelectedRepetitionUIState(it, repetitionsState.value.loading, false)
+            },
+            currentUser = repetitionsState.value.currentUserId,
+            repetitions = repetitionsState.value.allUsersRepetitions
         )
     }
 
     if (reserveState != null) {
-        RepetitionComponent(
+        ReservationComponent(
             reserveState!!,
             onBackClicked = {
                 reserveState = null
             },
+            onReserve = { subject, professor ->
+                reserveRepetition(
+                    subject,
+                    professor,
+                    reserveState!!.date,
+                    reserveState!!.time
+                )
+            }
         )
+    }
+
+    if (selectedRepetitionState != null) {
+        RepetitionComponent(
+            selectedRepetitionState!!,
+            onBackClicked = {
+                selectedRepetitionState = null
+                repetitionsState.value.lastRepetitionUpdated = null
+            },
+            onDeleteRepetition = { deleteRepetition(selectedRepetitionState!!.repetition)},
+            onUpdateRepetition = { status, note -> updateRepetition(selectedRepetitionState!!.repetition, status, note) }
+        )
+    }
+
+    // Update reserveStateLoading when loading changes
+    LaunchedEffect(repetitionsState.value.loading) {
+        reserveState = reserveState?.copy(isLoading = repetitionsState.value.loading)
+        selectedRepetitionState = selectedRepetitionState?.copy(isLoading = repetitionsState.value.loading)
+    }
+
+    LaunchedEffect(repetitionsState.value.lastRepetitionUpdated) {
+        // Gestione pagina effettuata prenotazione
+        if (
+            repetitionsState.value.lastRepetitionUpdated != null &&
+            reserveState != null &&
+            repetitionsState.value.lastRepetitionUpdated!!.date == reserveState!!.date &&
+            repetitionsState.value.lastRepetitionUpdated!!.time == reserveState!!.time
+        ) {
+            reserveState = reserveState!!.copy(reserveSuccess = true)
+        }
+
+        // Gestione pagina conferma e cancellazione
+        if (
+            repetitionsState.value.lastRepetitionUpdated != null &&
+            selectedRepetitionState != null &&
+            repetitionsState.value.lastRepetitionUpdated!!.ID == selectedRepetitionState!!.repetition.ID
+        ) {
+            selectedRepetitionState = selectedRepetitionState!!.copy(wasOperationCompleted = true)
+        }
     }
 
 }
 
-    data class ReserveUIState(
-        val date: LocalDate,
-        val time: Int,
-        val availableProfessors: Map<String, List<Professor>>,
-        val professors: Map<String, List<Professor>>
-    )
+data class ReserveUIState(
+    val date: LocalDate,
+    val time: Int,
+    val availableProfessors: Map<String, List<Professor>>,
+    val isLoading: Boolean,
+    val courses: List<Course> = emptyList(),
+    var reserveSuccess: Boolean = false
+)
+
+data class SelectedRepetitionUIState(
+    val repetition: Repetition,
+    val isLoading: Boolean,
+    var wasOperationCompleted: Boolean
+)
 
 
 @Composable
@@ -130,6 +206,8 @@ private fun RepetitionsList(
     professors: Map<String, List<Professor>>,
     onReserveClicked: (date: LocalDate, time: Int, availableProfessors: Map<String, List<Professor>>) -> Unit,
     onRepetitionClicked: (Repetition) -> Unit,
+    currentUser: String? = null,
+    repetitions: List<Repetition> = emptyList(),
 ) {
 
     val currentDay = remember {
@@ -145,39 +223,7 @@ private fun RepetitionsList(
     val calendarMode = remember {
         mutableStateOf(CalendarMode.Day)
     }
-
-    val repetitions = mutableListOf<Repetition>()
-    val dates = generateUniqueDates(
-        LocalDate.now().minusDays(1),
-        LocalDate.now().plusDays(7)
-    ) // Generate 30 unique dates
-    var index = 0
-    repeat(80) {
-        val date = dates[index % dates.size]
-
-        val user = User("${it % 2}", "User_${it % 5}", "User", "User_${it % 5}")
-        val course = courses[it % courses.size]
-        val professor = professors[course.ID]!![it % professors[course.ID]!!.size]
-
-        val repetition = Repetition(
-            ID = "Repetition_$it",
-            IDUser = user.id,
-            IDCourse = course.ID,
-            IDProfessor = professor.ID,
-            professor = professor,
-            user = user,
-            date = date,
-            time = (it % 4) + 14,
-            status = RepetitionStatus.values()[it % 3].toString(),
-            note = "Note_$it",
-            course = Course("Course_${it % 10}", "Course_${it % 10}")
-        )
-        repetitions.add(repetition)
-        index++
-    }
-
     val grouped = repetitions.groupBy { it.date }
-    repetitions.sortBy { it.date }
 
     val listState = rememberLazyListState() // Remember scroll state to scroll to the current day
 
@@ -200,6 +246,7 @@ private fun RepetitionsList(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
+
                 RepetitionsListView(
                     startDate = LocalDate.now(), // Start from today
                     endDate = maxOf(
@@ -209,7 +256,7 @@ private fun RepetitionsList(
                     courses = courses,
                     professors = professors,
                     groupedRepetitions = grouped,
-                    user = repetitions.first().user!!,
+                    user = currentUser,
                     currentDayChanged = {
                         currentDay.value = it
                     },
@@ -235,7 +282,7 @@ fun RepetitionsListView(
     courses: List<Course>,
     professors: Map<String, List<Professor>>,
     groupedRepetitions: Map<LocalDate, List<Repetition>>,
-    user: User,
+    user: String?,
     currentDayChanged: (LocalDate) -> Unit = {},
     currentDay: LocalDate,
     listState: LazyListState,
@@ -244,7 +291,7 @@ fun RepetitionsListView(
         time: Int,
         availableProfessors: Map<String, List<Professor>>,
     ) -> Unit,
-    onRepetitionClicked: (Repetition) -> Unit = {},
+    onRepetitionClicked: (Repetition) -> Unit,
 ) {
 
     val isScrollSentProgrammatically = remember {
@@ -256,16 +303,6 @@ fun RepetitionsListView(
             listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.key is LocalDate }
                 ?.let { it.key as LocalDate } //?: currentDay
-        }
-    }
-
-    val isNearToEnd: State<Boolean> = remember {
-        derivedStateOf {
-            val itemCount = listState.layoutInfo.totalItemsCount
-            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-            val threshold = 3
-
-            itemCount - lastVisibleIndex <= threshold
         }
     }
 
@@ -349,7 +386,6 @@ fun RepetitionsListView(
                 )
             }
 
-
             items(times) { time ->
 
                 Row(
@@ -370,17 +406,23 @@ fun RepetitionsListView(
                     val repetitionOfCurrentTime =
                         groupedRepetitions[date]?.filter { it.time == time } ?: emptyList()
 
+                    if (repetitionOfCurrentTime.isNotEmpty())
+                        Log.e(
+                            "RepetitionsListView",
+                            "date: $date user $user repetitionOfCurrentTime: $repetitionOfCurrentTime"
+                        )
+
                     // Get repetition of current time and user
                     val myRepetition =
                         repetitionOfCurrentTime?.firstOrNull {
-                            it.IDUser?.equals(user?.id) ?: false
+                            it.IDUser?.equals(user) ?: false
                         }
 
                     if (myRepetition != null) {
 
                         RepetitionCardComponent(
                             repetition = myRepetition,
-                            onRepetitionClicked = {}
+                            onRepetitionClicked = { onRepetitionClicked(myRepetition) }
                         )
 
                     } else {
@@ -388,9 +430,23 @@ fun RepetitionsListView(
                         // Get available courses and professors
                         val availableProfessor = professors.toMutableMap()
                         repetitionOfCurrentTime.forEach { rep ->
+
+                            if (repetitionOfCurrentTime.isNotEmpty())
+                                Log.e(
+                                    "RepetitionsListView",
+                                    "date: $date avaialbe: $availableProfessor"
+                                )
+
                             availableProfessor[rep.IDCourse]?.let { professorList ->
                                 val filteredProfessors =
                                     professorList.filter { it.ID != rep.IDProfessor }
+
+                                if (repetitionOfCurrentTime.isNotEmpty())
+                                    Log.e(
+                                        "RepetitionsListView",
+                                        "date: $date filtered: $filteredProfessors"
+                                    )
+
                                 availableProfessor[rep.IDCourse!!] = filteredProfessors
                             }
                         }

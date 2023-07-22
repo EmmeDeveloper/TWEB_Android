@@ -3,11 +3,24 @@ package com.tweb.project30.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -147,9 +160,9 @@ fun RepetitionCardComponent(
 //                                    Color(0x77808080)
 //                                else
                                 when (repetition.status) {
-                                    RepetitionStatus.PENDING.toString() -> Color(0xFFFFCC99)
-                                    RepetitionStatus.DONE.toString() -> Color(0xFF99FF99)
-                                    RepetitionStatus.DELETED.toString() -> Color(0xFFFF9999)
+                                    RepetitionStatus.PENDING.value -> Color(0xFFFFCC99)
+                                    RepetitionStatus.DONE.value -> Color(0xFF99FF99)
+                                    RepetitionStatus.DELETED.value -> Color(0xFFFF9999)
                                     else -> Color(0xFF9999FF)
                                 },
                                 shape = RoundedCornerShape(8.dp)
@@ -158,13 +171,13 @@ fun RepetitionCardComponent(
                         Text(
                             modifier = Modifier.padding(4.dp),
                             text =
-                            if (repetition.isBeforeNow())
-                                "Passata"
-                            else
+//                            if (repetition.isBeforeNow())
+//                                "Passata"
+//                            else
                                 when (repetition.status) {
-                                    RepetitionStatus.PENDING.toString() -> "Da confermare"
-                                    RepetitionStatus.DONE.toString() -> "Effettuata"
-                                    RepetitionStatus.DELETED.toString() -> "Non effettuata"
+                                    RepetitionStatus.PENDING.value -> "Da confermare"
+                                    RepetitionStatus.DONE.value -> "Effettuata"
+                                    RepetitionStatus.DELETED.value -> "Non effettuata"
                                     else -> "In attesa"
                                 },
                             fontSize = 13.sp,
@@ -188,7 +201,7 @@ fun RepetitionCardComponent(
 
                     Spacer(Modifier.weight(1f))
 
-                    if (repetition.note != null) {
+                    if (repetition.note != null && repetition.note != "") {
                         Icon(
                             Icons.Filled.Description,
                             contentDescription = "Note",

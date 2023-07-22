@@ -71,8 +71,6 @@ private fun HomeLoggedScreen(
 
     val prev: Repetition = Repetition(
         ID = "1",
-        IDUser = "1",
-        IDCourse = "1",
         course = Course(
             ID = "1",
             title = "Analisi 1",
@@ -90,8 +88,6 @@ private fun HomeLoggedScreen(
 
     val next: Repetition = Repetition(
         ID = "1",
-        IDUser = "1",
-        IDCourse = "1",
         course = Course(
             ID = "1",
             title = "Programmazione 3",
