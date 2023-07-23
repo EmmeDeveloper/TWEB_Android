@@ -53,7 +53,8 @@ fun RepetitionsFilterToolbar(
                     maxProfCount = professors[course.ID]?.size ?: 0,
                     onClick = {
                         onClearFilterClicked(course)
-                    }
+                    },
+                    enabled = selectedProfessors.keys.size > 1
                 )
             }
         }
@@ -80,14 +81,16 @@ fun CourseChip(
     course: Course,
     selectedProfCount: Int = 0,
     maxProfCount: Int = 0,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean
 ) {
     InputChip(
         modifier = Modifier.padding(start = 16.dp),
         selected = true,
         onClick = {
-            onClick()
+            if (enabled) onClick()
         },
+        enabled = enabled,
         label = {
             Column(modifier = Modifier.padding(8.dp)) {
                 Text(text = course.title!!, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -101,7 +104,7 @@ fun CourseChip(
                 modifier = Modifier
                     .size(24.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (enabled) MaterialTheme.colorScheme.primary else Color.LightGray,
                         shape = RoundedCornerShape(24.dp)
                     )
                     .padding(4.dp),

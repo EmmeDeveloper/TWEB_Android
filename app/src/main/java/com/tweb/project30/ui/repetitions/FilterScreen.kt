@@ -86,12 +86,12 @@ fun FilterScreen(
                                 )
                                 edited.value = false
                             },
-                            enabled = edited.value
+                            enabled = edited.value && selectedProfessors.isNotEmpty()
                         ) {
                             Icon(
                                 Icons.Filled.Save, contentDescription = "Save",
                                 tint =
-                                if (edited.value) MaterialTheme.colorScheme.primary
+                                if (edited.value && selectedProfessors.isNotEmpty()) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                             )
                         }
