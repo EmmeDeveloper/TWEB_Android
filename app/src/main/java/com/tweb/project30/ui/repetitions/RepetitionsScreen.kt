@@ -40,7 +40,8 @@ import java.util.*
 @Composable
 fun RepetitionsScreen(
     viewModel: RepetitionsViewModel,
-    onFilterButtonClicked: () -> Unit
+    onFilterButtonClicked: () -> Unit,
+    onLoginClicked: () -> Unit,
 ) {
     val uiState = viewModel.uiState.collectAsState()
 
@@ -60,7 +61,8 @@ fun RepetitionsScreen(
         },
         updateRepetition = { repetition, status, note ->
             viewModel.updateRepetition(repetition, status, note)
-        }
+        },
+        onLoginClicked = onLoginClicked
     )
 
 }
@@ -72,7 +74,8 @@ private fun RepetitionsScreen(
     updateFilters: (selectedProfessors: Map<String, List<Professor>>) -> Unit,
     reserveRepetition: (idcourse: String, idprofessor: String, date: LocalDate, time: Int) -> Unit,
     deleteRepetition: (repetition: Repetition) -> Unit,
-    updateRepetition: (repetition: Repetition, status: String, note: String? ) -> Unit,
+    updateRepetition: (repetition: Repetition, status: String, note: String?) -> Unit,
+    onLoginClicked: () -> Unit
 ) {
 
     val courses = repetitionsState.value.courses
@@ -114,7 +117,8 @@ private fun RepetitionsScreen(
                     time,
                     availableProfessors,
                     repetitionsState.value.loading,
-                    courses
+                    courses,
+                    isLogged = !repetitionsState.value.currentUserId.isNullOrEmpty()
                 )
             },
             onRepetitionClicked = {
@@ -133,12 +137,17 @@ private fun RepetitionsScreen(
                 reserveState = null
             },
             onReserve = { subject, professor ->
-                reserveRepetition(
-                    subject,
-                    professor,
-                    reserveState!!.date,
-                    reserveState!!.time
-                )
+                if (reserveState!!.isLogged)
+                    reserveRepetition(
+                        subject,
+                        professor,
+                        reserveState!!.date,
+                        reserveState!!.time
+                    )
+                else {
+                    repetitionsState.value.lastRepetitionUpdated = null
+                    onLoginClicked()
+                }
             }
         )
     }
@@ -150,15 +159,22 @@ private fun RepetitionsScreen(
                 selectedRepetitionState = null
                 repetitionsState.value.lastRepetitionUpdated = null
             },
-            onDeleteRepetition = { deleteRepetition(selectedRepetitionState!!.repetition)},
-            onUpdateRepetition = { status, note -> updateRepetition(selectedRepetitionState!!.repetition, status, note) }
+            onDeleteRepetition = { deleteRepetition(selectedRepetitionState!!.repetition) },
+            onUpdateRepetition = { status, note ->
+                updateRepetition(
+                    selectedRepetitionState!!.repetition,
+                    status,
+                    note
+                )
+            }
         )
     }
 
     // Update reserveStateLoading when loading changes
     LaunchedEffect(repetitionsState.value.loading) {
         reserveState = reserveState?.copy(isLoading = repetitionsState.value.loading)
-        selectedRepetitionState = selectedRepetitionState?.copy(isLoading = repetitionsState.value.loading)
+        selectedRepetitionState =
+            selectedRepetitionState?.copy(isLoading = repetitionsState.value.loading)
     }
 
     LaunchedEffect(repetitionsState.value.lastRepetitionUpdated) {
@@ -180,6 +196,11 @@ private fun RepetitionsScreen(
         ) {
             selectedRepetitionState = selectedRepetitionState!!.copy(wasOperationCompleted = true)
         }
+
+        if (repetitionsState.value.lastRepetitionUpdated == null) {
+            reserveState = reserveState?.copy(reserveSuccess = false)
+            selectedRepetitionState = selectedRepetitionState?.copy(wasOperationCompleted = false)
+        }
     }
 
 }
@@ -190,7 +211,8 @@ data class ReserveUIState(
     val availableProfessors: Map<String, List<Professor>>,
     val isLoading: Boolean,
     val courses: List<Course> = emptyList(),
-    var reserveSuccess: Boolean = false
+    var reserveSuccess: Boolean = false,
+    val isLogged: Boolean = false
 )
 
 data class SelectedRepetitionUIState(
@@ -211,7 +233,13 @@ private fun RepetitionsList(
 ) {
 
     val currentDay = remember {
-        mutableStateOf(LocalDate.now())
+        mutableStateOf(
+            if (LocalDate.now().dayOfWeek in listOf(
+                    DayOfWeek.SATURDAY,
+                    DayOfWeek.SUNDAY
+                )
+            ) LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY)) else LocalDate.now()
+        )
     }
 
     val daysOfWeek = remember {
@@ -324,6 +352,10 @@ fun RepetitionsListView(
         var date = days.keys.lastOrNull() ?: startDate
 
         while (date.isBefore(maxCalculatedDate.value.plusDays(1))) {
+            if (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY) {
+                date = date.plusDays(1)
+                continue
+            }
             val times = mutableListOf<Int>()
             times.add(14)
             times.add(15)
@@ -458,7 +490,7 @@ fun RepetitionsListView(
                             onRepetitionClicked = {
                                 onReserveClicked(date, time, availableProfessor)
                             },
-                            date = date.atTime(LocalTime.of(time, 0, 0)),
+                            date = date.atTime(LocalTime.of(time, 0, 0))
                         )
 
                     }

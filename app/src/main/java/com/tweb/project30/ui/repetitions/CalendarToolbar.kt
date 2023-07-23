@@ -4,7 +4,13 @@ import SegmentText
 import SegmentedControl
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -12,7 +18,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -24,10 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tweb.project30.ui.theme.MontserratFontFamily
 import kotlinx.coroutines.android.awaitFrame
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.Locale
 
 enum class CalendarMode {
     Day,
@@ -108,7 +120,8 @@ fun CalendarWeek(
     ) {
         daysOfWeek.forEach {
 
-            val isEnabled = pastDaySelectable || it.isAfter(LocalDate.now().minus(1, ChronoUnit.DAYS))
+            val isEnabled = it.dayOfWeek !in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) &&
+                    (pastDaySelectable || it.isAfter(LocalDate.now().minus(1, ChronoUnit.DAYS)))
 
             Surface(
                 Modifier
@@ -246,7 +259,11 @@ fun CalendarMonth(
                             if (day != null) {
                                 val isSelected = day == currentDay
                                 val isToday = day == LocalDate.now()
-                                val daySelectable = pastDaySelectable || day >= LocalDate.now()
+                                val daySelectable =
+                                    day.dayOfWeek !in listOf(
+                                        DayOfWeek.SATURDAY,
+                                        DayOfWeek.SUNDAY
+                                    ) && (pastDaySelectable || day >= LocalDate.now())
 
                                 val textColor =
                                     if (isToday) MaterialTheme.colorScheme.primary
@@ -300,7 +317,11 @@ fun CalendarMonth(
                 val lastDayOfMonth = firstDayOfMonth.plusMonths(1).minusDays(1)
                 firstDayOfMonth.dayOfWeek.value - 1 + (7 - lastDayOfMonth.dayOfWeek.value) // Initial offset + last week offset
             }
-            .sum() + currentDay.dayOfYear + LocalDate.of(currentDay.year, currentDay.month, 1).dayOfWeek.value - 1
+            .sum() + currentDay.dayOfYear + LocalDate.of(
+            currentDay.year,
+            currentDay.month,
+            1
+        ).dayOfWeek.value - 1
         awaitFrame()
         listState.animateScrollToItem(currentDay.month.value + cellBeforeDate / 7 - (if (cellBeforeDate % 7 == 0) 1 else 0))
     }

@@ -55,61 +55,56 @@ fun RepetitionCardComponentHome(
             .clickable { onRepetitionClicked(repetition.ID) },
     ) {
 
-        if (isLoading) {
+        Box() {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            )
+            {
 
-        } else {
+                // Left side
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = repetition.course?.title ?: "Corso eliminato",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        fontFamily = MontserratFontFamily
+                    )
+                    Spacer(modifier = Modifier.padding(2.dp))
+                    Text(
+                        text = "${repetition.date}",
+                        fontSize = 16.sp,
+                        fontFamily = MontserratFontFamily
+                    )
+                    Spacer(modifier = Modifier.padding(2.dp))
+                    Text(
+                        text = "${repetition.time}:00 - ${repetition.time + 1}:00",
+                        fontSize = 16.sp,
+                        fontFamily = MontserratFontFamily
+                    )
+                    Spacer(modifier = Modifier.padding(2.dp))
+                    Text(
+                        text = repetition.professor?.run { "$name $surname" }
+                            ?: "Professore eliminato",
+                        fontSize = 16.sp,
+                        fontFamily = MontserratFontFamily
+                    )
+                }
 
-            Box() {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                )
-                {
+                // Right side
+                Column {
 
-                    // Left side
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = repetition.course?.title ?: "Corso eliminato",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            fontFamily = MontserratFontFamily
+                    Spacer(Modifier.weight(1f))
+
+                    if (repetition.note != null) {
+                        Icon(
+                            Icons.Filled.Description,
+                            contentDescription = "Note",
+                            modifier = Modifier
+                                .size(24.dp)
                         )
-                        Spacer(modifier = Modifier.padding(2.dp))
-                        Text(
-                            text = "${repetition.date}",
-                            fontSize = 16.sp,
-                            fontFamily = MontserratFontFamily
-                        )
-                        Spacer(modifier = Modifier.padding(2.dp))
-                        Text(
-                            text = "${repetition.time}:00 - ${repetition.time + 1}:00",
-                            fontSize = 16.sp,
-                            fontFamily = MontserratFontFamily
-                        )
-                        Spacer(modifier = Modifier.padding(2.dp))
-                        Text(
-                            text = repetition.professor?.run { "$name $surname" }
-                                ?: "Professore eliminato",
-                            fontSize = 16.sp,
-                            fontFamily = MontserratFontFamily
-                        )
-                    }
-
-                    // Right side
-                    Column {
-
-                        Spacer(Modifier.weight(1f))
-
-                        if (repetition.note != null) {
-                            Icon(
-                                Icons.Filled.Description,
-                                contentDescription = "Note",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
                     }
                 }
             }
@@ -174,12 +169,12 @@ fun RepetitionCardComponent(
 //                            if (repetition.isBeforeNow())
 //                                "Passata"
 //                            else
-                                when (repetition.status) {
-                                    RepetitionStatus.PENDING.value -> "Da confermare"
-                                    RepetitionStatus.DONE.value -> "Effettuata"
-                                    RepetitionStatus.DELETED.value -> "Non effettuata"
-                                    else -> "In attesa"
-                                },
+                            when (repetition.status) {
+                                RepetitionStatus.PENDING.value -> "Da confermare"
+                                RepetitionStatus.DONE.value -> "Effettuata"
+                                RepetitionStatus.DELETED.value -> "Non effettuata"
+                                else -> "In attesa"
+                            },
                             fontSize = 13.sp,
                             fontFamily = MontserratFontFamily,
                             maxLines = 1
@@ -238,7 +233,7 @@ fun AvailableRepetitionCardComponent(
                 shape = RoundedCornerShape(8.dp)
             )
             .background(Color.White)
-            .clickable { onRepetitionClicked(null) },
+            .clickable(enabled = isEnabled.value) { onRepetitionClicked(null) },
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White,

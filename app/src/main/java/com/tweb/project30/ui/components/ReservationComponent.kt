@@ -145,7 +145,9 @@ fun ReservationComponent(
                 enabled = selectedSubjectProf.value.first != "" && selectedSubjectProf.value.second != "",
                 loading = state.isLoading,
             ) {
-                Text(text = "Prenota")
+                if (state.isLogged)
+                    Text(text = "Prenota")
+                else Text(text = "Accedi e prenota")
             }
         }
     }

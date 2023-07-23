@@ -91,7 +91,11 @@ fun BottomNavigationBar(appState: Project30AppState) {
                 }
 
                 composable(Screen.Repetitions.route) {
-                    RepetitionsScreen(repetitionsVM, onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) })
+                    RepetitionsScreen(
+                        repetitionsVM,
+                        onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) },
+                        onLoginClicked = { navController.navigate(Screen.Login.route) }
+                    )
                 }
 
                 composable(Screen.Profile.route) {
