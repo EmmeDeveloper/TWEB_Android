@@ -91,8 +91,7 @@ fun CalendarToolbar(
                 SegmentText(it)
             }
 
-            if (selectedItem == "Giorno")
-            {
+            if (selectedItem == "Giorno") {
                 if (mode == RepetitionMode.GLOBAL_REPETITIONS)
                     CalendarWeek(
                         daysOfWeek = daysOfWeek,
@@ -100,8 +99,7 @@ fun CalendarToolbar(
                         onDaySelected = onDaySelected,
                         pastDaySelectable = true
                     )
-            }
-            else
+            } else
                 CalendarMonth(
                     currentDay = currentDay,
                     onDaySelected = onDaySelected,
@@ -267,10 +265,13 @@ fun CalendarMonth(
                                 val isSelected = day == currentDay
                                 val isToday = day == LocalDate.now()
                                 val daySelectable =
-                                    day.dayOfWeek !in listOf(
-                                        DayOfWeek.SATURDAY,
-                                        DayOfWeek.SUNDAY
-                                    ) && (pastDaySelectable || day >= LocalDate.now())
+                                    if (selectableDays.isNotEmpty())
+                                        day in selectableDays
+                                    else
+                                        day.dayOfWeek !in listOf(
+                                            DayOfWeek.SATURDAY,
+                                            DayOfWeek.SUNDAY
+                                        ) && (pastDaySelectable || day >= LocalDate.now())
 
                                 val textColor =
                                     if (isToday) MaterialTheme.colorScheme.primary

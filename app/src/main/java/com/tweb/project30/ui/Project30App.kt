@@ -25,11 +25,12 @@ import com.tweb.project30.ui.login.LoginViewModel
 import com.tweb.project30.ui.login.LoginViewModelFactory
 import com.tweb.project30.ui.profile.ProfileScreen
 import com.tweb.project30.ui.repetitions.FilterScreen
-import com.tweb.project30.ui.repetitions.MyRepetitionsScreen
-import com.tweb.project30.ui.repetitions.RepetitionMode
 import com.tweb.project30.ui.repetitions.RepetitionsScreen
 import com.tweb.project30.ui.repetitions.RepetitionsViewModel
 import com.tweb.project30.ui.repetitions.RepetitionsViewModelFactory
+import com.tweb.project30.ui.repetitions.UserRepetitionsScreen
+import com.tweb.project30.ui.repetitions.UserRepetitionsViewModel
+import com.tweb.project30.ui.repetitions.UserRepetitionsViewModelFactory
 
 @Composable
 fun Project30App(
@@ -48,8 +49,8 @@ fun BottomNavigationBar(appState: Project30AppState) {
     val navController = appState.navController
     val loginVM: LoginViewModel = viewModel(factory = LoginViewModelFactory())
     val homeVM: HomeViewModel = viewModel(factory = HomeViewModelFactory())
-    var repetitionsVM = RepetitionsViewModelFactory(RepetitionMode.GLOBAL_REPETITIONS).create(RepetitionsViewModel::class.java)
-    var myRepetitionsVM = RepetitionsViewModelFactory(RepetitionMode.MY_REPETITIONS).create(RepetitionsViewModel::class.java)
+    val repetitionsVM: RepetitionsViewModel = viewModel(factory = RepetitionsViewModelFactory())
+    val userRepetitionsVM: UserRepetitionsViewModel = viewModel(factory = UserRepetitionsViewModelFactory())
 
 
     Scaffold(
@@ -87,9 +88,8 @@ fun BottomNavigationBar(appState: Project30AppState) {
                 }
 
                 composable(Screen.Repetitions.route) {
-                    MyRepetitionsScreen(
-                        myRepetitionsVM,
-                        onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) },
+                    UserRepetitionsScreen(
+                        userRepetitionsVM,
                         onLoginClicked = { navController.navigate(Screen.Login.route) }
                     )
                 }
