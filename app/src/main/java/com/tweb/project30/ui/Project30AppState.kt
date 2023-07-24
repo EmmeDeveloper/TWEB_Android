@@ -20,16 +20,15 @@ sealed class Screen(
     val icon: ImageVector,
 ) {
     object Home : Screen(route = "home", label = "Home", icon = Icons.Filled.Home)
-    object Calendar : Screen(route = "calendar", label = "Search", icon = Icons.Filled.CalendarMonth)
-    object Repetitions : Screen(route = "repetitions", label = "Repetitions", icon = Icons.Filled.List)
-    object Profile : Screen(route = "profile", label = "Profile", icon = Icons.Filled.Person)
+    object Calendar : Screen(route = "calendar", label = "Calendario", icon = Icons.Filled.CalendarMonth)
+    object Repetitions : Screen(route = "repetitions", label = "Ripetizioni", icon = Icons.Filled.List)
+    object Profile : Screen(route = "profile", label = "Profilo", icon = Icons.Filled.Person)
     object Login: Screen(route = "login", label = "Login", icon = Icons.Filled.Eco)
 
     sealed class NestedScreen(
         val route: String
     ) {
         object Filter : NestedScreen(route = "repetitions/filter")
-        object Reserve : NestedScreen(route = "repetitions/reserve")
     }
 }
 

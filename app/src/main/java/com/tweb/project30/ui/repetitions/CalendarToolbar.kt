@@ -52,6 +52,8 @@ fun CalendarToolbar(
     currentDay: LocalDate,
     onDaySelected: (LocalDate) -> Unit,
     onModeSelected: (CalendarMode) -> Unit,
+    mode: RepetitionMode = RepetitionMode.GLOBAL_REPETITIONS,
+    selectableDays: List<LocalDate> = emptyList(),
 ) {
     val listState = rememberLazyListState() // Create here to avoid recomposition
 
@@ -90,17 +92,21 @@ fun CalendarToolbar(
             }
 
             if (selectedItem == "Giorno")
-                CalendarWeek(
-                    daysOfWeek = daysOfWeek,
-                    currentDay = currentDay,
-                    onDaySelected = onDaySelected
-                )
+            {
+                if (mode == RepetitionMode.GLOBAL_REPETITIONS)
+                    CalendarWeek(
+                        daysOfWeek = daysOfWeek,
+                        currentDay = currentDay,
+                        onDaySelected = onDaySelected,
+                        pastDaySelectable = true
+                    )
+            }
             else
                 CalendarMonth(
                     currentDay = currentDay,
                     onDaySelected = onDaySelected,
-//                    onDaySelected = {  },
-                    listState = listState
+                    listState = listState,
+                    selectableDays = selectableDays
                 )
         }
     }
@@ -183,6 +189,7 @@ fun CalendarMonth(
     onDaySelected: (LocalDate) -> Unit,
     pastDaySelectable: Boolean = false,
     listState: LazyListState,
+    selectableDays: List<LocalDate>,
 ) {
     val days = remember { getDaysOfYear(currentDay.year) }
     val dayOfWeek = remember { listOf("L", "M", "M", "G", "V", "S", "D") }

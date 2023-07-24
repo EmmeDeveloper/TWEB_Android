@@ -25,6 +25,8 @@ import com.tweb.project30.ui.login.LoginViewModel
 import com.tweb.project30.ui.login.LoginViewModelFactory
 import com.tweb.project30.ui.profile.ProfileScreen
 import com.tweb.project30.ui.repetitions.FilterScreen
+import com.tweb.project30.ui.repetitions.MyRepetitionsScreen
+import com.tweb.project30.ui.repetitions.RepetitionMode
 import com.tweb.project30.ui.repetitions.RepetitionsScreen
 import com.tweb.project30.ui.repetitions.RepetitionsViewModel
 import com.tweb.project30.ui.repetitions.RepetitionsViewModelFactory
@@ -46,7 +48,9 @@ fun BottomNavigationBar(appState: Project30AppState) {
     val navController = appState.navController
     val loginVM: LoginViewModel = viewModel(factory = LoginViewModelFactory())
     val homeVM: HomeViewModel = viewModel(factory = HomeViewModelFactory())
-    val repetitionsVM: RepetitionsViewModel = viewModel(factory = RepetitionsViewModelFactory())
+    var repetitionsVM = RepetitionsViewModelFactory(RepetitionMode.GLOBAL_REPETITIONS).create(RepetitionsViewModel::class.java)
+    var myRepetitionsVM = RepetitionsViewModelFactory(RepetitionMode.MY_REPETITIONS).create(RepetitionsViewModel::class.java)
+
 
     Scaffold(
         bottomBar = {
@@ -78,19 +82,19 @@ fun BottomNavigationBar(appState: Project30AppState) {
                     )
                 }
 
-                composable(Screen.Calendar.route) {
-                    HomeScreen(
-                        viewModel = homeVM,
-                        onUserActionClicked = { navController.navigate(Screen.Profile.route) },
-                        onRepetitionClicked = { navController.navigate(Screen.Repetitions.route) }
-                    )
-                }
-
                 composable(Screen.NestedScreen.Filter.route) {
                     FilterScreen(repetitionsVM, onBackPressed = { navController.popBackStack() })
                 }
 
                 composable(Screen.Repetitions.route) {
+                    MyRepetitionsScreen(
+                        myRepetitionsVM,
+                        onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) },
+                        onLoginClicked = { navController.navigate(Screen.Login.route) }
+                    )
+                }
+
+                composable(Screen.Calendar.route) {
                     RepetitionsScreen(
                         repetitionsVM,
                         onFilterButtonClicked = { navController.navigate(Screen.NestedScreen.Filter.route) },
@@ -116,9 +120,9 @@ fun BottomBar(navController: NavHostController) {
 
     var screens: List<Screen> = listOf(
         Screen.Home,
+        Screen.Repetitions,
         Screen.Calendar,
-        Screen.Repetitions
-    )
+        )
 
     if (isLogged) {
         screens = screens.plus(Screen.Profile)

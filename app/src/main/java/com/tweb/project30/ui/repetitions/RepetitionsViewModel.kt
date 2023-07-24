@@ -32,10 +32,10 @@ data class RepetitionsUIState(
 )
 
 class RepetitionsViewModel(
-    private val userRepository: UserRepository,
     private val repetitionRepository: RepetitionRepository,
     private val teachingRepository: TeachingRepository,
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val repetitionMode: RepetitionMode
 ) : ViewModel(
 ) {
     private val _state = MutableStateFlow(RepetitionsUIState())
@@ -43,25 +43,33 @@ class RepetitionsViewModel(
     val uiState: StateFlow<RepetitionsUIState>
         get() = _state
 
+    val mode: RepetitionMode
+        get() = repetitionMode
+
     init {
 
-        getCoursesAndProfessors()
+        if (mode == RepetitionMode.GLOBAL_REPETITIONS) {
+            getCoursesAndProfessors()
 
-        viewModelScope.launch {
-            // Observe changes to the professors property only once
-            _state.first { state ->
-                state.professors.isNotEmpty()
+            viewModelScope.launch {
+                // Observe changes to the professors property only once
+                _state.first { state ->
+                    state.professors.isNotEmpty()
+                }
+                // Call getAllRepetitions with desired date range
+                getAllRepetitions(firstDateOfYear(), lastDateOfYear())
             }
-            // Call getAllRepetitions with desired date range
-            getAllRepetitions(firstDateOfYear(), lastDateOfYear())
         }
+
+
+
 
         UserRepository.isLogged.observeForever { isLogged ->
 
             if (isLogged) {
                 _state.update { it.copy(currentUserId = UserRepository.currentUser!!.id) }
                 getMyRepetitions(firstDateOfYear(), lastDateOfYear())
-                getAllRepetitions(firstDateOfYear(), lastDateOfYear())
+                if (mode == RepetitionMode.GLOBAL_REPETITIONS) getAllRepetitions(firstDateOfYear(), lastDateOfYear())
             }
         }
     }
@@ -295,20 +303,23 @@ class RepetitionsViewModel(
 
     private fun firstDateOfYear(): Date {
         val date = Calendar.getInstance()
-        date.set(LocalDate.now().year,1,1)
+        date.set(LocalDate.now().year, 1, 1)
         return date.time
     }
 
     private fun lastDateOfYear(): Date {
         val date = Calendar.getInstance()
-        date.set(LocalDate.now().year,12,31)
+        date.set(LocalDate.now().year, 12, 31)
         return date.time
     }
 
 
 }
 
-class RepetitionsViewModelFactory : ViewModelProvider.Factory {
+class RepetitionsViewModelFactory(private val repetitionMode: RepetitionMode) :
+    ViewModelProvider.Factory {
+
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(RepetitionsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
@@ -316,12 +327,17 @@ class RepetitionsViewModelFactory : ViewModelProvider.Factory {
             Log.e("vm", "creato view")
 
             return RepetitionsViewModel(
-                userRepository = UserRepository,
                 repetitionRepository = RepetitionRepository,
                 teachingRepository = TeachingRepository,
-                courseRepository = CourseRepository
+                courseRepository = CourseRepository,
+                repetitionMode = repetitionMode
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
+}
+
+enum class RepetitionMode {
+    GLOBAL_REPETITIONS,
+    MY_REPETITIONS,
 }
