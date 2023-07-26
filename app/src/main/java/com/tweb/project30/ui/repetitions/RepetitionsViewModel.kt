@@ -60,14 +60,24 @@ class RepetitionsViewModel(
             if (isLogged) {
                 _state.update { it.copy(currentUserId = UserRepository.currentUser!!.id) }
                 getMyRepetitions(firstDateOfYear(), lastDateOfYear())
-                getAllRepetitions(firstDateOfYear(), lastDateOfYear())
             }
+        }
+
+        RepetitionRepository.userRepetitions.observeForever { repetitions ->
+            _state.update { it.copy(myRepetitions = repetitions.sortedBy { it.date }) }
+            getAllRepetitions(firstDateOfYear(), lastDateOfYear())
+        }
+
+        RepetitionRepository.globalRepetitions.observeForever { repetitions ->
+            _state.update { it.copy(allUsersRepetitions = repetitions.sortedBy { it.date }) }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
         UserRepository.isLogged.removeObserver { }
+        RepetitionRepository.globalRepetitions.removeObserver { }
+        RepetitionRepository.userRepetitions.removeObserver { }
     }
 
     private fun getCoursesAndProfessors() {
@@ -131,13 +141,14 @@ class RepetitionsViewModel(
                 )
 
                 var courses = _state.value.selectedProfessors.keys.toList()
-                val allRepetitions = repetitionRepository.getRepetitions(
+
+                repetitionRepository.getRepetitions(
                     courses,
                     firstDateOfYear(),
                     lastDateOfYear()
                 )
 
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     firstDateOfYear(),
                     lastDateOfYear()
@@ -145,8 +156,6 @@ class RepetitionsViewModel(
 
                 _state.update {
                     it.copy(
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                        myRepetitions = myRepetitions.sortedBy { it.date },
                         lastRepetitionUpdated = rep
                     )
                 }
@@ -169,13 +178,13 @@ class RepetitionsViewModel(
                 repetitionRepository.updateRepetition(repetition.ID, status, note)
 
                 var courses = _state.value.selectedProfessors.keys.toList()
-                val allRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     courses,
                     firstDateOfYear(),
                     lastDateOfYear()
                 )
 
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     firstDateOfYear(),
                     lastDateOfYear()
@@ -184,8 +193,6 @@ class RepetitionsViewModel(
                 _state.update {
                     it.copy(
                         lastRepetitionUpdated = repetition,
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                        myRepetitions = myRepetitions.sortedBy { it.date },
                     )
                 }
 
@@ -207,13 +214,13 @@ class RepetitionsViewModel(
                 repetitionRepository.deleteRepetition(repetition.ID)
 
                 var courses = _state.value.selectedProfessors.keys.toList()
-                val allRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     courses,
                     firstDateOfYear(),
                     lastDateOfYear()
                 )
 
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     firstDateOfYear(),
                     lastDateOfYear()
@@ -222,8 +229,6 @@ class RepetitionsViewModel(
                 _state.update {
                     it.copy(
                         lastRepetitionUpdated = repetition,
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                        myRepetitions = myRepetitions.sortedBy { it.date },
                     )
                 }
 
@@ -248,12 +253,6 @@ class RepetitionsViewModel(
                     startDate,
                     endDate
                 )
-
-                _state.update {
-                    it.copy(
-                        myRepetitions = myRepetitions.sortedBy { it.date },
-                    )
-                }
                 Log.e("RepetitionsV MyRep", myRepetitions.toString())
             } catch (e: Exception) {
                 Log.e("RepetitionsVM", e.stackTraceToString())
@@ -277,12 +276,7 @@ class RepetitionsViewModel(
                     startDate,
                     endDate
                 )
-                Log.e("RepetitionsVM AllRep", allRepetitions.toString())
-                _state.update {
-                    it.copy(
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                    )
-                }
+
             } catch (e: Exception) {
                 Log.e("RepetitionsVM", e.stackTraceToString())
             } finally {

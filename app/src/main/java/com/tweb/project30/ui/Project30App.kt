@@ -24,6 +24,8 @@ import com.tweb.project30.ui.login.LoginScrenn
 import com.tweb.project30.ui.login.LoginViewModel
 import com.tweb.project30.ui.login.LoginViewModelFactory
 import com.tweb.project30.ui.profile.ProfileScreen
+import com.tweb.project30.ui.profile.ProfileViewModel
+import com.tweb.project30.ui.profile.ProfileViewModelFactory
 import com.tweb.project30.ui.repetitions.FilterScreen
 import com.tweb.project30.ui.repetitions.RepetitionsScreen
 import com.tweb.project30.ui.repetitions.RepetitionsViewModel
@@ -37,7 +39,7 @@ fun Project30App(
     appState: Project30AppState = rememberProject30AppState()
 ) {
 //    if (appState.isOnline) {
-        BottomNavigationBar(appState)
+    BottomNavigationBar(appState)
 //    } else {
 //        OfflineDialog { appState.refreshOnline() }
 //    }
@@ -50,7 +52,9 @@ fun BottomNavigationBar(appState: Project30AppState) {
     val loginVM: LoginViewModel = viewModel(factory = LoginViewModelFactory())
     val homeVM: HomeViewModel = viewModel(factory = HomeViewModelFactory())
     val repetitionsVM: RepetitionsViewModel = viewModel(factory = RepetitionsViewModelFactory())
-    val userRepetitionsVM: UserRepetitionsViewModel = viewModel(factory = UserRepetitionsViewModelFactory())
+    val userRepetitionsVM: UserRepetitionsViewModel =
+        viewModel(factory = UserRepetitionsViewModelFactory())
+    val profileVM: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())
 
 
     Scaffold(
@@ -76,9 +80,11 @@ fun BottomNavigationBar(appState: Project30AppState) {
                 composable(Screen.Home.route) {
                     HomeScreen(
                         viewModel = homeVM,
-                        onUserActionClicked = { navController.navigate(
-                            if (UserRepository.isLogged?.value == true) Screen.Profile.route else Screen.Login.route
-                        ) },
+                        onUserActionClicked = {
+                            navController.navigate(
+                                if (UserRepository.isLogged?.value == true) Screen.Profile.route else Screen.Login.route
+                            )
+                        },
                         onRepetitionClicked = { navController.navigate(Screen.Repetitions.route) }
                     )
                 }
@@ -103,7 +109,10 @@ fun BottomNavigationBar(appState: Project30AppState) {
                 }
 
                 composable(Screen.Profile.route) {
-                   ProfileScreen()
+                    ProfileScreen(
+                        profileVM,
+                        onLogout = { navController.navigate(Screen.Login.route) }
+                    )
                 }
             }
         }
@@ -122,7 +131,7 @@ fun BottomBar(navController: NavHostController) {
         Screen.Home,
         Screen.Repetitions,
         Screen.Calendar,
-        )
+    )
 
     if (isLogged) {
         screens = screens.plus(Screen.Profile)

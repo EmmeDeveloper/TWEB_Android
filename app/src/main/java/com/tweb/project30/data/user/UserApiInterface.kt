@@ -14,5 +14,9 @@ interface UserApiInterface {
         @JsonProperty("user") val user: User,
     )
 
+    @POST("logout")
+    suspend fun logout() : Response<Unit>
+
+
 }
 

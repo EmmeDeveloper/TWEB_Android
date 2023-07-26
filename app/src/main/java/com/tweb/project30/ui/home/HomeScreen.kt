@@ -1,12 +1,29 @@
 package com.tweb.project30.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -14,20 +31,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tweb.project30.data.course.Course
-import com.tweb.project30.data.professor.Professor
-import com.tweb.project30.data.repetition.Repetition
-import com.tweb.project30.data.repetition.RepetitionStatus
+import com.tweb.project30.R
 import com.tweb.project30.ui.components.RepetitionCardComponentHome
 import com.tweb.project30.ui.theme.MontserratFontFamily
-import java.time.LocalDate
-import java.util.*
+import com.tweb.project30.util.supportWideScreen
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -48,7 +65,7 @@ private fun HomeScreen(
     onRepetitionClicked: (repetitionID: String?) -> Unit
 ) {
 
-    if (homeState.value.isLogged || true) {
+    if (homeState.value.isLogged) {
         HomeLoggedScreen(
             homeState = homeState.value,
             onUserActionClicked = onUserActionClicked,
@@ -68,40 +85,6 @@ private fun HomeLoggedScreen(
     onUserActionClicked: () -> Unit,
     onRepetitionClicked: (repetitionID: String?) -> Unit
 ) {
-
-    val prev: Repetition = Repetition(
-        ID = "1",
-        course = Course(
-            ID = "1",
-            title = "Analisi 1",
-        ),
-        date = LocalDate.now(),
-        time = 10,
-        professor = Professor(
-            ID = "1",
-            name = "Mario",
-            surname = "Rossi",
-        ),
-        note = "Note bellissime",
-        status = RepetitionStatus.DONE.value
-    )
-
-    val next: Repetition = Repetition(
-        ID = "1",
-        course = Course(
-            ID = "1",
-            title = "Programmazione 3",
-        ),
-        date = LocalDate.now().plusDays(1),
-        time = 14,
-        professor = Professor(
-            ID = "1",
-            name = "Molica",
-            surname = "Marco",
-        ),
-        status = RepetitionStatus.PENDING.value
-    )
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -179,42 +162,41 @@ private fun HomeLoggedScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Lezione precedente",
-            fontSize = 22.sp,
-            fontFamily = MontserratFontFamily
-        )
-
-        // Previous
-        if (homeState.previousRepetition != null || true) {
-            RepetitionCardComponentHome(
-                repetition = homeState.previousRepetition ?: prev,
-                onRepetitionClicked = { onRepetitionClicked(it) })
-        } else {
-            // No previous repetition
-            // Card
-            // onRepetitionClicked
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
             text = "Prossima lezione",
             fontSize = 22.sp,
             fontFamily = MontserratFontFamily
         )
 
-        // Next
-        if (homeState.nextRepetition != null || true) {
+        // Previous
+        if (homeState.nextRepetition != null) {
+
             RepetitionCardComponentHome(
-                repetition = homeState.previousRepetition ?: next,
+                repetition = homeState.nextRepetition!!,
                 onRepetitionClicked = { onRepetitionClicked(it) })
-            // onRepetitionClicked
         } else {
-            // No next repetition
-            // Card
-            // onRepetitionClicked
+            Text(text = "Nessuna lezione ancora da svolgere, prenotane una adesso!", modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),fontSize = 16.sp)
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Lezione precedente",
+            fontSize = 22.sp,
+            fontFamily = MontserratFontFamily,
+
+            )
+
+
+        // Next
+        if (homeState.previousRepetition != null) {
+            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
+                RepetitionCardComponentHome(
+                    repetition = homeState.previousRepetition!!,
+                    onRepetitionClicked = { onRepetitionClicked(it) })
+            }
+        } else {
+            Text(text = "Nessuna lezione già svolta", modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),fontSize = 16.sp)
+        }
 
     }
 
@@ -225,9 +207,56 @@ private fun HomeNotLoggedScreen(
     homeState: HomeUIState,
     onUserActionClicked: () -> Unit
 ) {
-    // Hi! Please login to continue.
-    // Schermata
-    // Login button
+    Surface(
+        modifier = Modifier
+            .supportWideScreen()
+            .padding(vertical = 16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Project30",
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .padding(top = 44.dp, bottom = 8.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            val image: Painter = painterResource(R.drawable.home_image)
+            Image(
+                painter = image,
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                contentScale = ContentScale.Crop
+            )
+
+            Text(
+                text = "Trova l'insegnante ideale",
+                fontWeight = FontWeight.Bold,
+                fontSize = 29.sp,
+                modifier = Modifier
+                    .padding(top = 16.dp, bottom = 8.dp, start = 24.dp, end = 24.dp)
+                    .fillMaxWidth()
+            )
+
+            Text(
+                text = "Online o in presenza, trova l'insegnante che fa per te e inizia a studiare subito!",
+                fontSize = 22.sp,
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 8.dp, start = 24.dp, end = 24.dp)
+                    .fillMaxWidth()
+            )
+        }
+    }
 
 }
 

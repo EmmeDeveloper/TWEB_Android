@@ -104,7 +104,7 @@ fun CalendarToolbar(
                     currentDay = currentDay,
                     onDaySelected = onDaySelected,
                     listState = listState,
-                    selectableDays = selectableDays
+                    selectableDays = if (mode == RepetitionMode.MY_REPETITIONS) selectableDays else null
                 )
         }
     }
@@ -187,7 +187,7 @@ fun CalendarMonth(
     onDaySelected: (LocalDate) -> Unit,
     pastDaySelectable: Boolean = false,
     listState: LazyListState,
-    selectableDays: List<LocalDate>,
+    selectableDays: List<LocalDate>? = null
 ) {
     val days = remember { getDaysOfYear(currentDay.year) }
     val dayOfWeek = remember { listOf("L", "M", "M", "G", "V", "S", "D") }
@@ -244,8 +244,14 @@ fun CalendarMonth(
                     modifier = Modifier
                         .padding(top = 16.dp, start = 16.dp, end = 16.dp),
                     color =
-                    if (pastDaySelectable || month.value >= LocalDate.now().month.value) Color.Black
-                    else Color.Gray.copy(alpha = 0.5f)
+                    // Se il mese contiene un giorno nella lista dei selezionabili
+                    if (selectableDays != null) {
+                        if (selectableDays.any { it.month == month }) Color.Black
+                        else Color.Gray.copy(alpha = 0.5f)
+                    } else {
+                        if (pastDaySelectable || month.value >= LocalDate.now().month.value) Color.Black
+                        else Color.Gray.copy(alpha = 0.5f)
+                    }
                 )
             }
 
@@ -265,7 +271,7 @@ fun CalendarMonth(
                                 val isSelected = day == currentDay
                                 val isToday = day == LocalDate.now()
                                 val daySelectable =
-                                    if (selectableDays.isNotEmpty())
+                                    if (selectableDays != null)
                                         day in selectableDays
                                     else
                                         day.dayOfWeek !in listOf(

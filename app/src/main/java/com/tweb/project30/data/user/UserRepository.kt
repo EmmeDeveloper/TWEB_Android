@@ -24,7 +24,7 @@ object UserRepository {
 
         if (result.isSuccessful) {
             currentUser = result.body()!!.user
-           _isLogged.postValue(true)
+           _isLogged.setValue(true)
         }
         else {
             when (result.code()) {
@@ -34,5 +34,16 @@ object UserRepository {
         }
     }
 
+    suspend fun logout() {
+
+        var result = apiService.logout()
+
+        if (!result.isSuccessful) {
+            throw Exception("Invalid result - status: " + result.code())
+        }
+
+        currentUser = User.Default
+        _isLogged.value = false
+    }
 
 }

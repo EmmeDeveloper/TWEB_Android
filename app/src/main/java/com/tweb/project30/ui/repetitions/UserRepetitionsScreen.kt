@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tweb.project30.R
@@ -248,6 +249,24 @@ private fun RepetitionsList(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
+
+                if (grouped.isEmpty()) {
+                    Text(
+                        AnnotatedString("Non hai ripetizioni in\n programma\n") +
+                                AnnotatedString(
+                                    "\n \uD83D\uDE41",
+                                    spanStyle = SpanStyle(
+                                        fontSize = 32.sp,
+                                    )
+                                ),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 40.dp, end = 16.dp)
+                    )
+                }
 
                 UserRepetitionListView(
                     groupedRepetitions = grouped,

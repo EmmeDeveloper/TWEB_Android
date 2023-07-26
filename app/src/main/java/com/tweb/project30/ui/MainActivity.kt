@@ -25,8 +25,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // TODOS
-// Logout, profilo
-// Pagina home normale
-// Ultimo filtro non rimuovibile
+// Sistmare logo
+// Togliere email e password prepopolate
 
 

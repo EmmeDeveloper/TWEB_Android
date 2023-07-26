@@ -32,11 +32,16 @@ class UserRepetitionsViewModel(
                 getMyRepetitions(firstDateOfYear(), lastDateOfYear())
             }
         }
+
+        RepetitionRepository.userRepetitions.observeForever { repetitions ->
+            _state.update { it.copy(myRepetitions = repetitions.sortedBy { it.date }) }
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
         UserRepository.isLogged.removeObserver { }
+        RepetitionRepository.userRepetitions.removeObserver { }
     }
 
     fun updateRepetition(repetition: Repetition, status: String, note: String? = null) {
@@ -48,14 +53,7 @@ class UserRepetitionsViewModel(
                 // If update has an error, an execption is thrown, so after the update we can assume that the update was successful
                 repetitionRepository.updateRepetition(repetition.ID, status, note)
 
-                var courses = _state.value.selectedProfessors.keys.toList()
-                val allRepetitions = repetitionRepository.getRepetitions(
-                    courses,
-                    firstDateOfYear(),
-                    lastDateOfYear()
-                )
-
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     firstDateOfYear(),
                     lastDateOfYear()
@@ -64,8 +62,6 @@ class UserRepetitionsViewModel(
                 _state.update {
                     it.copy(
                         lastRepetitionUpdated = repetition,
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                        myRepetitions = myRepetitions.sortedBy { it.date },
                     )
                 }
 
@@ -86,14 +82,7 @@ class UserRepetitionsViewModel(
                 // If update has an error, an execption is thrown, so after the update we can assume that the update was successful
                 repetitionRepository.deleteRepetition(repetition.ID)
 
-                var courses = _state.value.selectedProfessors.keys.toList()
-                val allRepetitions = repetitionRepository.getRepetitions(
-                    courses,
-                    firstDateOfYear(),
-                    lastDateOfYear()
-                )
-
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     firstDateOfYear(),
                     lastDateOfYear()
@@ -102,8 +91,6 @@ class UserRepetitionsViewModel(
                 _state.update {
                     it.copy(
                         lastRepetitionUpdated = repetition,
-                        allUsersRepetitions = allRepetitions.sortedBy { it.date },
-                        myRepetitions = myRepetitions.sortedBy { it.date },
                     )
                 }
 
@@ -122,19 +109,11 @@ class UserRepetitionsViewModel(
 
         viewModelScope.launch {
             try {
-
-                val myRepetitions = repetitionRepository.getRepetitions(
+                repetitionRepository.getRepetitions(
                     _state.value.currentUserId,
                     startDate,
-                    endDate
-                )
+                    endDate)
 
-                _state.update {
-                    it.copy(
-                        myRepetitions = myRepetitions.sortedBy { it.date },
-                    )
-                }
-                Log.e("RepetitionsV MyRep", myRepetitions.toString())
             } catch (e: Exception) {
                 Log.e("RepetitionsVM", e.stackTraceToString())
             } finally {

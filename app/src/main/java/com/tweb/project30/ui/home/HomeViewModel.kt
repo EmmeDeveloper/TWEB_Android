@@ -3,16 +3,12 @@ package com.tweb.project30.ui.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import com.tweb.project30.data.repetition.Repetition
 import com.tweb.project30.data.repetition.RepetitionRepository
 import com.tweb.project30.data.user.User
 import com.tweb.project30.data.user.UserRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.util.*
 
 data class HomeUIState(
@@ -25,7 +21,6 @@ data class HomeUIState(
 
 class HomeViewModel(
     private val userRepository: UserRepository,
-    private val repetitionRepository: RepetitionRepository
 ): ViewModel() {
 
     private val _state = MutableStateFlow(HomeUIState(
@@ -36,40 +31,10 @@ class HomeViewModel(
     init {
         UserRepository.isLogged.observeForever { isLogged ->
             _state.update { it.copy(isLogged = isLogged, currentUser = UserRepository.currentUser) }
-
-            if (isLogged) {
-                getReservation()
-            }
         }
-    }
 
-    override fun onCleared() {
-        super.onCleared()
-        UserRepository.isLogged.removeObserver { }
-    }
-
-    val uiState: MutableStateFlow<HomeUIState>
-        get() = _state
-
-    fun getReservation() {
-        _state.update { it.copy(loading = true) }
-
-        viewModelScope.launch {
-            try {
-                delay(200)
-                val user = userRepository.currentUser
-
-                val start = Calendar.getInstance()
-                start.set(LocalDate.now().year,1,1)
-
-                val end = Calendar.getInstance()
-                end.set(LocalDate.now().year,12,31)
-
-                val repetitions = repetitionRepository.getRepetitions(
-                    user.id,
-                    start.time,
-                    end.time
-                )
+        RepetitionRepository.userRepetitions.observeForever {repetitions ->
+            if (repetitions.isNotEmpty()) {
 
                 val previousRepetition = repetitions
                     .filter { it.isBeforeNow() }
@@ -86,16 +51,16 @@ class HomeViewModel(
                     nextRepetition = nextRepetition
                 ) }
             }
-            catch (e: Exception) {
-                Log.e("HomeVM-getReservation", e.stackTraceToString() )
-            }
-            finally {
-                _state.update { it.copy(loading = false) }
-            }
         }
-
-
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        UserRepository.isLogged.removeObserver { }
+    }
+
+    val uiState: MutableStateFlow<HomeUIState>
+        get() = _state
 
 }
 
@@ -108,7 +73,6 @@ class HomeViewModelFactory : ViewModelProvider.Factory {
 
             return HomeViewModel(
                 userRepository = UserRepository,
-                repetitionRepository = RepetitionRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
