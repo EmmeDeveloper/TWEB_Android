@@ -14,7 +14,8 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 
 
 object RetrofitHelper {
-    var BASE_URL = "http://192.168.1.29:8080/Project30/"
+//    var BASE_URL = "http://192.168.1.29:8080/Project30/"
+    var BASE_URL = "http://172.20.10.3:8080/Project30/"
 
     fun getInstance(): Retrofit {
 
